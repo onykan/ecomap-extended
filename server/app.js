@@ -1,7 +1,6 @@
 const express = require('express'),
     morgan = require('morgan'),
-    path = require('path'),
-    router = require('./routes');
+    path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,8 +14,9 @@ app.use(express.static(path.join(__dirname, '../client/build')));
 // Provides great rout logging in our console for debugging
 app.use(morgan('dev'));
 
-// Import the routing setup from our Router 
-app.use('/', router);
+const apiRouter = require('./controllers/api');
+
+app.use('/api', apiRouter);
 
 //Serving react on routes unused by previous routing
 app.get('*', (req, res) => {
