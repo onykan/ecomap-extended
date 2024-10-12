@@ -30,27 +30,13 @@ async function fetchData(url, params = "") {
   }
 }
 
-async function getIndicators(pageNum = 1) {
-  return await fetchData(apiUrl + "/indicators", `page=${pageNum}&format=json`);
+async function getIndicators() {
+  return await fetchData(apiUrl + "/indicators", `format=json&per_page=1000`);
 }
 
-// Only fetches the first page
-async function getStats(countryCode, indicator, yearBegin, yearEnd) {
+async function getByIndicator(countryCode = "all", indicator, yearBegin, yearEnd) {
   const url = `${apiUrl}/country/${countryCode}/indicator/${indicator}`;
-  return await fetchData(url, `format=json&date=${yearBegin}:${yearEnd}`);
-}
-
-async function getAllDataPages(countryCode, indicator, yearBegin, yearEnd) {
-  pages = [];
-  page = 1;
-  const url = `${apiUrl}/country/${countryCode}/indicator/${indicator}`;
-  while (true) {
-    pageData = await fetchData(url, `format=json&date=${yearBegin}:${yearEnd}&page=${page}`);
-    pages.push(pageData[1]);
-    if (pageData[0]["pages"] > page) page++;
-    else break;
-  }
-  return pages;
+  return await fetchData(url, `format=json&date=${yearBegin}:${yearEnd}&per_page=1000`);
 }
 
 function reorderPagesByKey(pages, key = "countryiso3code") {
@@ -68,65 +54,54 @@ function reorderPagesByKey(pages, key = "countryiso3code") {
 }
 
 async function getIndicatorID(name) {
-  let page = 1;
-  while(true) {
-    // console.log(page);
-    const indicators = await getIndicators(page);
-    for (i in indicators[1]) {
-      const indicator = indicators[1][i];
-      const indName = indicator["name"];
-      if (indName != undefined && indName.startsWith(name)) return indicator["id"];
-    }
-    if (indicators[0]["pages"] > page) page++;
-    else break;
+  const indicators = await getIndicators();
+  for (i in indicators[1]) {
+    const indicator = indicators[1][i];
+    const indName = indicator["name"];
+    if (indName != undefined && indName.startsWith(name)) return indicator["id"];
   }
   return "";
 }
 
 async function getMatchingIndicators(name) {
   inds = [];
-  let page = 1;
-  while(true) {
-    const indicators = await getIndicators(page);
-    // console.log(page);
-    for (i in indicators[1]) {
-      const indicator = indicators[1][i];
-      const indName = indicator["name"];
-      if (indName != undefined && indName.includes(name)) inds.push(indicator)
-    }
-    if (indicators[0]["pages"] > page) page++;
-    else break;
+  const indicators = await getIndicators();
+  for (i in indicators[1]) {
+    const indicator = indicators[1][i];
+    const indName = indicator["name"];
+    if (indName != undefined && indName.includes(name)) inds.push(indicator)
   }
   return inds;
 }
 
 async function main() {
-  const indicatorsInfo = (await fetchData(apiUrl + "/indicators", "format=json"))[0];
-  const indicators = await getIndicators(1);
-  const countries = await fetchData(apiUrl + "/country", "format=json") // 6 pages total
-  const jsonData = await getStats("FIN", "NY.GDP.MKTP.KD", 2010, 2020);
+  const indicators = await getIndicators();
+
+  // All countries
+  const countries = await fetchData(apiUrl + "/country", "format=json&per_page=1000");
+  // console.log(countries);
+
+  // Gets GDP of all countries
+  const gdpAllCountries = await getByIndicator("all", "NY.GDP.MKTP.KD", 2013, 2023);
+  let gdpMap = reorderPagesByKey(gdpAllCountries, "countryiso3code");
+  // console.log(gdpMap);
+  // console.log(gdpMap["FIN"]);
+
+  // Income levels of all countries
+  // Could possibly be used to color code countries on map
+  let incomeLevels = {}
+  for (let c = 0; c < countries[1].length; c++) {
+    incomeLevels[countries[1][c]["id"]] = countries[1][c]["incomeLevel"];
+  }
+  // console.log(incomeLevels);
+
+
+  // const gdpID = await getIndicatorID("GDP (current US$)");
+  // const finGDB = await getByIndicator("FIN", gdpID, 2010, 2012);
+  // console.log(finGDB);
 
   // const indsgdp = await getMatchingIndicators("GDP");
   // console.log(indsgdp);
-
-  // Gets GDP of all countries
-  const gdpAllCountries = await getAllDataPages("all", "NY.GDP.MKTP.KD", 2013, 2023);
-  let gdpMap = reorderPagesByKey(gdpAllCountries, "countryiso3code");
-  console.log(gdpMap);
-  console.log(gdpMap["FIN"]);
-
-
-  // const bkbAllCountries = await getStats("all", "", 2013, 2023);
-  // console.log(bkbAllCountries);
-
-  // const gdpID = await getIndicatorID("GDP (current US$)");
-  // const finGDB = await getStats("FIN", gdpID, 2010, 2012);
-  // console.log(finGDB);
-
-  // console.log(countries);
-  // console.log(indicatorsInfo);
-  // console.log(indicators[1]);
-  // console.log(jsonData);
 }
 
 // main();
