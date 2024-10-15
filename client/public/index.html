@@ -37,5 +37,64 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+
+    <!--
+        TODO: FOR DEBUGGING
+        REMOVE ONCE FRONTEND DEVELOPMENT BEGINS
+    -->
+      <button name="test_button" type="button" id="testbutton">
+        Check uptime
+      </button>
+      <p id="testchecked"></p>
+      <p id="testuptime"></p>
+      </p>
+      <script>
+        const but = document.querySelector("#testbutton");
+        const che = document.querySelector("#testchecked");
+        const upt = document.querySelector("#testuptime");
+
+        but.addEventListener("click", getTime);
+
+        async function getTime() {
+          // Test uptime
+          const url = "./uptime";
+          try {
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`Response status: ${response.status}`);
+            }
+
+            const json = await response.json();
+            console.log(json);
+
+            let checked = new Date(json.checked);
+            let uptime = json.uptime;
+            // Dirty way of converting epoch to hours, minutes and seconds
+            let hours = Math.floor(uptime * 0.00000027777778);
+            uptime = uptime - (hours * (1 / 0.00000027777778));
+            let minutes = Math.floor(uptime * 0.00001666666667);
+            uptime = uptime - (minutes * (1 / 0.00001666666667));
+            let seconds = Math.floor(uptime / 1000);
+
+            che.textContent = "Checked at " + checked.toISOString();
+            upt.textContent = "Server uptime " +
+            new Intl.NumberFormat('en-IN', { minimumIntegerDigits: 2 }).format(
+              hours,
+            ) +
+            ":" +
+            new Intl.NumberFormat('en-IN', { minimumIntegerDigits: 2 }).format(
+              minutes,
+            ) +
+            ":" +
+            new Intl.NumberFormat('en-IN', { minimumIntegerDigits: 2 }).format(
+              seconds,
+            );
+          } catch (error) {
+            console.error(error.message);
+            che.textContent = "Uptime check failed :(";
+            upt.textContent = "";
+          }
+        }
+      </script>
   </body>
 </html>

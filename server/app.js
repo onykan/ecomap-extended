@@ -5,6 +5,8 @@ const express = require('express'),
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const start = Date.now();
+
 // Middleware
 // Bodyparsing
 app.use(express.urlencoded({ extended: false }));
@@ -18,9 +20,18 @@ const apiRouter = require('./controllers/api');
 
 app.use('/api', apiRouter);
 
+// TODO: DEBUG PATH - REMOVE LATER
+app.get('/uptime', (req, res) => {
+    let checked = Date.now();
+    res.json({
+        checked: checked,
+        uptime: checked - start
+    })
+});
+
 //Serving react on routes unused by previous routing
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+    res.sendFile(path.join(__dirname, '../client/public/index.html'));
 });
 
 //Startup
