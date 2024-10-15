@@ -108,11 +108,25 @@
       <input type="submit" value="Submit">
     </form>
 
+    <button id="clearDiv">Clear</button>
     <div id="gdps">
       <!-- GDPs inserted here -->
     </div>
 
     <script>
+      const clearDivBut = document.querySelector("#clearDiv");
+      clearDivBut.addEventListener("click", clearDiv);
+
+      function clearDiv() {
+        document.getElementById("gdps").innerHTML = "";
+      }
+
+      async function getIncomeLevels() {
+        const url = "./api/incomelevel";
+        const res = await fetch(url);
+        return await res.json();
+      }
+
       async function getGDP(yBeg, yEnd) {
         const url = "./api/indicator/gdp";
 
@@ -120,19 +134,23 @@
             yearBeg: yBeg,
             yearEnd: yEnd,
         }).toString());
+
         const data = await res.json();
         console.log(data);
+
+        const incomeLevels = await getIncomeLevels();
+        console.log(incomeLevels);
 
         document.getElementById("gdps").innerHTML = "";
         for (let [key, value] of Object.entries(data)) {
           document.getElementById("gdps")
             .innerHTML +=
               `<div>
-                <h3>${key}</h3>
-                ${value.map(e => {return "<p style='padding-left:1em;'>" + e.date + ": " + e.value + "</p>";}).join('')}
+                <h3 style='margin:0em; padding-top:1em;'>${key} | ${value[0].country.value}</h3>
+                ${incomeLevels[key] ? `<p style='margin:0em'>Income level: ${incomeLevels[key].value}</p>` : ""}
+                ${value.map(e => {return "<p style='padding-left:1em; margin:0em;'>" + e.date + ": " + e.value + "</p>";}).join('')}
               </div>`;
         }
-
       }
     </script>
   </body>

@@ -17,6 +17,15 @@ router.get('/indicator/gdp', async (req, res) => {
   res.json(gdpMap);
 })
 
+router.get('/incomelevel', async (req, res) => {
+  const countries = await fetchData(apiUrl + "/country", "format=json&per_page=1000");
+  let incomeLevels = {}
+  for (let c = 0; c < countries[1].length; c++) {
+    incomeLevels[countries[1][c]["id"]] = countries[1][c]["incomeLevel"];
+  }
+  res.json(incomeLevels);
+})
+
 async function fetchData(url, params = "") {
   // let d = {
   //   method: "GET",

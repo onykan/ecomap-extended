@@ -12,7 +12,7 @@
         "build": "cd client && npm run build"
     },
     "devDependencies": {
-        "concurrently": "^4.1.2"
+        "concurrently": "^9.0.1"
     },
     "dependencies": {
         "if-env": "^1.0.4"
