@@ -96,5 +96,44 @@
           }
         }
       </script>
+
+
+    <!-- Temporary testing -->
+    <p>Some GDP api testing</p>
+    <form action="javascript:getGDP(yearBeg.value, yearEnd.value)">
+      <label for="yearBeg">Begin year:</label>
+      <input type="text" id="yearBeg" name="yearBeg"><br><br>
+      <label for="yearEnd">End year:</label>
+      <input type="text" id="yearEnd" name="yearEnd"><br><br>
+      <input type="submit" value="Submit">
+    </form>
+
+    <div id="gdps">
+      <!-- GDPs inserted here -->
+    </div>
+
+    <script>
+      async function getGDP(yBeg, yEnd) {
+        const url = "./api/indicator/gdp";
+
+        const res = await fetch(url + "?" + new URLSearchParams({
+            yearBeg: yBeg,
+            yearEnd: yEnd,
+        }).toString());
+        const data = await res.json();
+        console.log(data);
+
+        document.getElementById("gdps").innerHTML = "";
+        for (let [key, value] of Object.entries(data)) {
+          document.getElementById("gdps")
+            .innerHTML +=
+              `<div>
+                <h3>${key}</h3>
+                ${value.map(e => {return "<p style='padding-left:1em;'>" + e.date + ": " + e.value + "</p>";}).join('')}
+              </div>`;
+        }
+
+      }
+    </script>
   </body>
 </html>

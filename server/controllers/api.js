@@ -4,18 +4,28 @@ const apiUrl = "https://api.worldbank.org/v2";
 const router = require('express').Router();
 
 router.get('/', async (req, res) => {
-  res.json("{}");
+  res.json({});
+})
+
+router.get('/indicator/gdp', async (req, res) => {
+  const maxYear = 2023;
+  let yearBeg = Math.min(req.query.yearBeg || maxYear, maxYear);
+  let yearEnd = Math.min(req.query.yearEnd || maxYear, maxYear);
+  yearEnd = Math.max(yearBeg, yearEnd);
+  const gdpAllCountries = await getByIndicator("all", "NY.GDP.MKTP.KD", yearBeg, yearEnd);
+  let gdpMap = reorderPagesByKey(gdpAllCountries, "countryiso3code");
+  res.json(gdpMap);
 })
 
 async function fetchData(url, params = "") {
-// let d = {
-//   method: "GET",
-//   withCredentials: true,
-//   headers: {
-//     "X-Auth-Token": "API_KEY",
-//     "Content-Type": "application/json"
-//   }
-// }
+  // let d = {
+  //   method: "GET",
+  //   withCredentials: true,
+  //   headers: {
+  //     "X-Auth-Token": "API_KEY",
+  //     "Content-Type": "application/json"
+  //   }
+  // }
 
   try {
     const response = await fetch(url + "?" + params);
