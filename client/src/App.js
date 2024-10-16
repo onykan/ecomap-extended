@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+/* import React, {useLayoutEffect, useState} from 'react';
 import './App.css';
 import axios from 'axios';
 
@@ -18,3 +18,17 @@ function App () {
 }
 
 export default App;
+*/
+import React from 'react'
+import Map from './components/Map'
+
+function App() {
+  return (
+    <div>
+      <Map />
+    </div>
+  )
+}
+
+export default App;
+
