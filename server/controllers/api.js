@@ -3,6 +3,8 @@ const apiUrl = "https://api.worldbank.org/v2";
 
 const router = require('express').Router();
 
+const maxPerPage = 10000;
+
 router.get('/', async (req, res) => {
   res.json({});
 })
@@ -18,7 +20,7 @@ router.get('/indicator/gdp', async (req, res) => {
 })
 
 router.get('/incomelevel', async (req, res) => {
-  const countries = await fetchData(apiUrl + "/country", "format=json&per_page=1000");
+  const countries = await fetchDataApi(apiUrl + "/country");
   let incomeLevels = {}
   for (let c = 0; c < countries[1].length; c++) {
     incomeLevels[countries[1][c]["id"]] = countries[1][c]["incomeLevel"];
@@ -26,6 +28,12 @@ router.get('/incomelevel', async (req, res) => {
   res.json(incomeLevels);
 })
 
+router.get('/countries', async (req, res) => {
+  const countries = await fetchDataApi(apiUrl + "/country");
+  res.json(countries);
+})
+
+// Returns the plain response of the fetch in JSON
 async function fetchData(url, params = "") {
   // let d = {
   //   method: "GET",
@@ -49,25 +57,37 @@ async function fetchData(url, params = "") {
   }
 }
 
+// Fetches all the pages if the data can't fit in one response
+async function fetchDataApi(url, params = "") {
+  const res = await fetchData(url, new URLSearchParams({ format: "json", per_page: maxPerPage }).toString() + "&" + params);
+  let data = res[1];
+
+  if (res[0].pages > 1) {
+    for (let page = 2; page <= res[0].pages; page++) {
+      const r = await fetchData(url, new URLSearchParams({ format: "json", per_page: maxPerPage, page: page }).toString());
+      data.concat(r[1]);
+    }
+  }
+  return data;
+}
+
 async function getIndicators() {
-  return await fetchData(apiUrl + "/indicators", `format=json&per_page=1000`);
+  return await fetchDataApi(apiUrl + "/indicators");
 }
 
 async function getByIndicator(countryCode = "all", indicator, yearBegin, yearEnd) {
   const url = `${apiUrl}/country/${countryCode}/indicator/${indicator}`;
-  return await fetchData(url, `format=json&date=${yearBegin}:${yearEnd}&per_page=1000`);
+  return await fetchDataApi(url, `date=${yearBegin}:${yearEnd}`);
 }
 
 function reorderPagesByKey(pages, key = "countryiso3code") {
   let map = {};
   for (let i = 0; i < pages.length; i++) {
-    for (let j = 0; j < pages[i].length; j++) {
-      let keyVal = pages[i][j][key];
-      if (!map[keyVal]) {
-        map[keyVal] = [];
-      }
-      map[keyVal].push(pages[i][j]);
+    let keyVal = pages[i][key];
+    if (!map[keyVal]) {
+      map[keyVal] = [];
     }
+    map[keyVal].push(pages[i]);
   }
   return map;
 }
