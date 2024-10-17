@@ -10,13 +10,20 @@ router.get('/', async (req, res) => {
 })
 
 router.get('/indicator/gdp', async (req, res) => {
+  const indicator = "NY.GDP.MKTP.KD"
   const maxYear = 2023;
   let yearBeg = Math.min(req.query.yearBeg || maxYear, maxYear);
   let yearEnd = Math.min(req.query.yearEnd || maxYear, maxYear);
   yearEnd = Math.max(yearBeg, yearEnd);
-  const gdpAllCountries = await getByIndicator("all", "NY.GDP.MKTP.KD", yearBeg, yearEnd);
-  let gdpMap = reorderPagesByKey(gdpAllCountries, "countryiso3code");
-  res.json(gdpMap);
+
+  if (req.query.country == undefined || req.query.country == "all") {
+    const gdpAllCountries = await getByIndicator("all", indicator, yearBeg, yearEnd);
+    let gdpMap = listAsMapByKey(gdpAllCountries, "countryiso3code");
+    res.json(gdpMap);
+  } else {
+    const gdp = await getByIndicator(req.query.country, indicator, yearBeg, yearEnd);
+    res.json(gdp);
+  }
 })
 
 router.get('/country/:code', async (req, res) => {
@@ -44,7 +51,7 @@ router.get('/country/:code/incomelevel', async (req, res) => {
     }, {});
     res.json(incomeLevels);
   } else {
-    const country = (await fetchDataApi(apiUrl + "/country/" + countryCode))[0];
+    const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
     res.json(country.incomeLevel);
   }
 })
@@ -85,7 +92,7 @@ async function fetchDataApi(url, params = "") {
       data.concat(r[1]);
     }
   }
-  return data;
+  return (data.length == 1) ? data[0] : data;
 }
 
 async function getIndicators() {
@@ -97,14 +104,14 @@ async function getByIndicator(countryCode = "all", indicator, yearBegin, yearEnd
   return await fetchDataApi(url, `date=${yearBegin}:${yearEnd}`);
 }
 
-function reorderPagesByKey(pages, key = "countryiso3code") {
+function listAsMapByKey(dataList, key = "countryiso3code") {
   let map = {};
-  for (let i = 0; i < pages.length; i++) {
-    let keyVal = pages[i][key];
+  for (let i = 0; i < dataList.length; i++) {
+    let keyVal = dataList[i][key];
     if (!map[keyVal]) {
       map[keyVal] = [];
     }
-    map[keyVal].push(pages[i]);
+    map[keyVal].push(dataList[i]);
   }
   return map;
 }
@@ -139,7 +146,7 @@ async function main() {
 
   // Gets GDP of all countries
   const gdpAllCountries = await getByIndicator("all", "NY.GDP.MKTP.KD", 2013, 2023);
-  let gdpMap = reorderPagesByKey(gdpAllCountries, "countryiso3code");
+  let gdpMap = listAsMapByKey(gdpAllCountries, "countryiso3code");
   // console.log(gdpMap);
   // console.log(gdpMap["FIN"]);
 
