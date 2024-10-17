@@ -122,7 +122,7 @@
       }
 
       async function getIncomeLevels() {
-        const url = "./api/incomelevel";
+        const url = "./api/country/all/incomelevel";
         const res = await fetch(url);
         return await res.json();
       }

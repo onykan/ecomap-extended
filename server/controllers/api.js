@@ -19,19 +19,36 @@ router.get('/indicator/gdp', async (req, res) => {
   res.json(gdpMap);
 })
 
-router.get('/incomelevel', async (req, res) => {
+router.get('/country/:code', async (req, res) => {
+  const countryCode = req.params.code;
+
+  // TODO: maybe keep countries in memory or database for faster access
   const countries = await fetchDataApi(apiUrl + "/country");
-  let incomeLevels = {}
-  for (let c = 0; c < countries[1].length; c++) {
-    incomeLevels[countries[1][c]["id"]] = countries[1][c]["incomeLevel"];
+
+  if (countryCode == "all") {
+    res.json(countries);
+  } else {
+    const country = countries.find((c) => c["id"] == countryCode);
+    res.json(country);
   }
-  res.json(incomeLevels);
 })
 
-router.get('/countries', async (req, res) => {
-  const countries = await fetchDataApi(apiUrl + "/country");
-  res.json(countries);
+router.get('/country/:code/incomelevel', async (req, res) => {
+  const countryCode = req.params.code;
+
+  if (countryCode == "all") {
+    const countries = await fetchDataApi(apiUrl + "/country");
+    const incomeLevels = countries.reduce((incLevels, country) => {
+      incLevels[country.id] = country.incomeLevel;
+      return incLevels;
+    }, {});
+    res.json(incomeLevels);
+  } else {
+    const country = (await fetchDataApi(apiUrl + "/country/" + countryCode))[0];
+    res.json(country.incomeLevel);
+  }
 })
+
 
 // Returns the plain response of the fetch in JSON
 async function fetchData(url, params = "") {
