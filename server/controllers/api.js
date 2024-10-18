@@ -6,11 +6,20 @@ const maxPerPage = 10000;
 const indicators =
   [
     { code: 'NY.GDP.MKTP.KD', name: 'Gross domestic product', id: 'GDP' },
+    { code: 'NY.GDP.MKTP.CD', name: 'Gross domestic product, not adjusted for inflation', id: 'GDPUSD' },
+    { code: 'SL.UEM.TOTL.ZS', name: 'Unemployment Rate', id: 'UR' },
+    { code: 'FP.CPI.TOTL', name: 'Inflation Rate (Consumer Price Index - CPI)', id: 'CPI' },
+    { code: 'BX.GSR.GNFS.CD', name: 'Exports of goods and services (BoP, current US$)', id: 'EXP' },
+    { code: 'BM.GSR.GNFS.CD', name: 'Imports of goods and services (BoP, current US$)', id: "IMP" },
   ];
 
 
 router.get('/', async (req, res) => {
   res.json({});
+})
+
+router.get('/indicators', async (_, res) => {
+  res.status(200).json(indicators);
 })
 
 router.get('/indicator/:id', async (req, res) => {
@@ -129,6 +138,7 @@ async function getIndicators() {
   return await fetchDataApi(apiUrl + "/indicators");
 }
 
+// TODO: maybe only include the country code and the asked indicator value to reduce the response size
 async function getByIndicator(countryCode = "all", indicator, yearBegin, yearEnd) {
   const url = `${apiUrl}/country/${countryCode}/indicator/${indicator}`;
   return await fetchDataApi(url, `date=${yearBegin}:${yearEnd}`);
@@ -163,7 +173,7 @@ async function getMatchingIndicators(name) {
   for (i in indicators) {
     const indicator = indicators[i];
     const indName = indicator["name"];
-    if (indName != undefined && indName.includes(name)) inds.push({ code: indicator["id"], name: indName })
+    if (indName != undefined && indName.toLowerCase().includes(name.toLowerCase())) inds.push({ code: indicator["id"], name: indName })
   }
   return inds;
 }
@@ -194,8 +204,8 @@ async function main() {
   // const finGDB = await getByIndicator("FIN", gdpID, 2010, 2012);
   // console.log(finGDB);
 
-  const indsgdp = await getMatchingIndicators("debt");
-  indsgdp.forEach((ind) => console.log(ind));
+  const inds = await getMatchingIndicators("");
+  inds.forEach((ind) => console.log(ind));
 }
 
 // main();
