@@ -59,8 +59,9 @@ router.get('/indicator/:id', async (req, res) => {
   }
 })
 
-router.get('/country', async (_, res) => {
-  res.redirect('./all');
+router.get('/country', async (req, res) => {
+  const redirectUrl = req.url.endsWith('/') ? './all' : './country/all';
+  res.redirect(redirectUrl);
 })
 
 router.get('/country/:code', async (req, res) => {
