@@ -29,9 +29,14 @@ app.get('/uptime', (req, res) => {
     })
 });
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/public/index.html'));
+});
+
 //Serving react on routes unused by previous routing
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/public/index.html'));
+    res.status(404);
+    res.send("Not found");
 });
 
 //Startup

@@ -131,12 +131,13 @@
         const url = "./api/indicator/gdp";
 
         const res = await fetch(url + "?" + new URLSearchParams({
-            yearBeg: yBeg,
-            yearEnd: yEnd,
+            dateBeg: yBeg,
+            dateEnd: yEnd,
         }).toString());
 
         const data = await res.json();
         console.log(data);
+        if (res.status == 404) return;
 
         const incomeLevels = await getIncomeLevels();
         console.log(incomeLevels);
