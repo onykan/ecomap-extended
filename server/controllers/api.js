@@ -5,12 +5,41 @@ const apiUrl = "https://api.worldbank.org/v2";
 const maxPerPage = 10000;
 const indicators =
   [
-    { code: 'NY.GDP.MKTP.KD', name: 'Gross domestic product', id: 'GDP' },
-    { code: 'NY.GDP.MKTP.CD', name: 'Gross domestic product, not adjusted for inflation', id: 'GDPUSD' },
-    { code: 'SL.UEM.TOTL.ZS', name: 'Unemployment Rate', id: 'UR' },
-    { code: 'FP.CPI.TOTL', name: 'Inflation Rate (Consumer Price Index - CPI)', id: 'CPI' },
-    { code: 'BX.GSR.GNFS.CD', name: 'Exports of goods and services (BoP, current US$)', id: 'EXP' },
-    { code: 'BM.GSR.GNFS.CD', name: 'Imports of goods and services (BoP, current US$)', id: "IMP" },
+    {
+      code: 'NY.GDP.MKTP.KD',
+      name: 'Gross domestic product',
+      id: 'GDP'
+    },
+    {
+      code: 'NY.GDP.MKTP.CD',
+      name: 'Gross domestic product, not adjusted for inflation',
+      id: 'GDPUSD'
+    },
+    {
+      code: 'SL.UEM.TOTL.ZS',
+      name: 'Unemployment Rate',
+      id: 'UR'
+    },
+    {
+      code: 'FP.CPI.TOTL',
+      name: 'Inflation Rate (Consumer Price Index - CPI)',
+      id: 'CPI'
+    },
+    {
+      code: 'BX.GSR.GNFS.CD',
+      name: 'Exports of goods and services (BoP, current US$)',
+      id: 'EXP'
+    },
+    {
+      code: 'BM.GSR.GNFS.CD',
+      name: 'Imports of goods and services (BoP, current US$)',
+      id: "IMP"
+    },
+    {
+      code: 'DP.DOD.DLD1.CR.GG.Z1',
+      name: 'Gross PSD, General Gov.-D1, All maturities, Debt securities + loans, Nominal Value, % of GDP',
+      id: 'PSD'
+    },
   ];
 
 
