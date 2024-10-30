@@ -88,6 +88,50 @@ router.get('/indicator/:id', async (req, res) => {
   }
 })
 
+// Path for minimal responses needed to display data layers on the map
+// TODO: Add parameter to fetch data either indexed by iso3 or country name
+// TODO: Precalculate and store commonly needed data
+router.get('/datalayer/:id', async (req, res) => {
+  const indId = req.params.id;
+  const indicator = indicators.find((ind) => ind.id.toLowerCase() === indId.toLowerCase());
+
+  // TODO: Check if precalculated
+
+  if (indicator != undefined) {
+    let dateBeg = req.query.dateBeg || undefined;
+    let dateEnd = req.query.dateEnd || undefined;
+
+    if (dateBeg === undefined && dateEnd === undefined) {
+      dateBeg = '';
+      dateEnd = '';
+    } else if (dateBeg === undefined) {
+      dateBeg = dateEnd;
+    } else if (dateEnd === undefined) {
+      dateEnd = dateBeg;
+    }
+
+    //if (req.query.country == undefined || req.query.country == "all") {
+    const dataAllCountries = await getByIndicator("all", indicator.code, dateBeg, dateEnd);
+    if (dataAllCountries == undefined) {
+      res.status(404).json({ message: "No data found" });
+      return;
+    }
+    if (dataAllCountries.message != undefined) {
+      res.status(404).json({ message: dataAllCountries.message });
+      return;
+    }
+    let gdpMap = listAsMapByKey(dataAllCountries, "countryiso3code");
+    gdpMap = reduceResponse(gdpMap, true);
+    res.json(gdpMap);
+  /*} else {
+      const data = await getByIndicator(req.query.country, indicator.code, dateBeg, dateEnd);
+      res.json(data || {});
+    }*/
+  } else {
+    res.status(404).json({ message: "Indicator not found" });
+  }
+})
+
 router.get('/country', async (req, res) => {
   const redirectUrl = req.url.endsWith('/') ? './all' : './country/all';
   res.redirect(redirectUrl);
@@ -186,6 +230,24 @@ function listAsMapByKey(dataList, key = "countryiso3code") {
   return map;
 }
 
+// Will reduce the response object to only contain the country iso3 code (or country name in case of 'useCountryName') nested with year-value pairs
+// Heavily assumes correct input format to be what *listAsMapByKey* returns
+// TODO: Consider simplifying data parsing and reduction
+function reduceResponse(objectOfAllIndicators, useCountryName = false) {
+  let reducedResponse = {};
+
+  for (let key in objectOfAllIndicators) {
+    let field;
+    if (useCountryName) field = objectOfAllIndicators[key][0].country.value;
+    else field = key;
+    if (field === undefined) continue;
+
+    reducedResponse[field] = objectOfAllIndicators[key].reduce((acc, cur) => ({ ...acc, [cur.date]: cur.value }), {});
+  }
+
+  return reducedResponse;
+}
+
 async function getIndicatorID(name) {
   const indicators = await getIndicators();
   for (i in indicators) {
@@ -234,8 +296,8 @@ async function main() {
   // const finGDB = await getByIndicator("FIN", gdpID, 2010, 2012);
   // console.log(finGDB);
 
-  const inds = await getMatchingIndicators("");
-  inds.forEach((ind) => console.log(ind));
+  //const inds = await getMatchingIndicators("");
+  //inds.forEach((ind) => console.log(ind));
 }
 
 // main();
