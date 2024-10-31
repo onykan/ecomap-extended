@@ -2,8 +2,11 @@ const express = require('express'),
     morgan = require('morgan'),
     path = require('path');
 
+require('dotenv').config({path: '../.env'});
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+const HOSTNAME = process.env.HOSTNAME || 'localhost';
 
 const start = Date.now();
 
@@ -40,6 +43,6 @@ app.get('*', (req, res) => {
 });
 
 //Startup
-app.listen(PORT, () => {
-    console.log(`The API Server is listening on port: ${PORT}`)
+app.listen(PORT, HOSTNAME, () => {
+    console.log(`The Server is running at: http://${HOSTNAME}:${PORT}`)
 })
