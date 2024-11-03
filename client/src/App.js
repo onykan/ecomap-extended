@@ -25,6 +25,7 @@ import Map from './components/Map';
 function App() {
   const [dateBeg, setDateBeg] = useState('2022');
   const [dateEnd, setDateEnd] = useState('2023');
+  const [indicator, setIndicator] = useState('gdp');
   const dateBegRef = useRef(null);
   const dateEndRef = useRef(null);
 
@@ -92,10 +93,19 @@ function App() {
             defaultValue={dateEnd}
           />
         </label>
+        <label>
+          Indicator:
+          <select value={indicator} onChange={(n) => setIndicator(n.target.value)}>
+            <option value="gdp">GDP</option>
+            <option value="ur">Unemployment Rate</option>
+            <option value="cpi">Inflation Rate (CPI)</option>
+          </select>
+        </label>
+
         <input type="submit" />
       </form>
       <div>
-        <Map dateBeg={dateBeg} dateEnd={dateEnd} />
+        <Map dateBeg={dateBeg} dateEnd={dateEnd} indicator={indicator} />
       </div>
     </div>
   );

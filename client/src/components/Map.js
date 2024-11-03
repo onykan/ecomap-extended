@@ -8,64 +8,84 @@ import { scaleBand, scaleLinear, scalePow } from "d3-scale";
 const geoUrl =
   "https://raw.githubusercontent.com/lotusms/world-map-data/main/world.json";
 
-const Map = ({dateBeg, dateEnd}) => {
+const Map = ({dateBeg, dateEnd, indicator}) => {
   const [data, setData] = useState([]);
-  /// Fetch data from api and parses it to the format that is used in the map
+
+  // Fetch data from api and parses it to the format that is used in the map
   useEffect(() => {
     const fetchData = async () => {
-      const result = await axios.get('api/indicator/gdp?dateBeg='+dateBeg+'&dateEnd='+dateEnd+'');
-      parsedata(result.data);
+      const result = await axios.get(`api/indicator/${indicator}?dateBeg=${dateBeg}&dateEnd=${dateEnd}`);
+      parseData(result.data);
     };
     fetchData();
-  }, [dateBeg, dateEnd]);
+  }, [dateBeg, dateEnd, indicator]);
   
-  /// Parses the data so the gdp is a persentual change from the first year to the last year
-  /// Sets the data to the state
-  /// If first or last year is null, the gdp is set to null
-  //If given years have only one data point, the gdp is set to null
-  const parsedata = (data) => {
-      const newData = {};
-      Object.keys(data).forEach(countryCode => {
-        const countryData = data[countryCode];
-        
-        const gdpLast = countryData[0].value;
-        const gdpFirst = countryData[countryData.length-1].value;
+  // does stuff
+  const parseData = (apiData) => {
+    const newData = {};
 
-        if (gdpFirst != null && gdpLast != null && countryData.length > 1) {
-          const gdpChangePersentage = ((gdpLast / gdpFirst)-1) * 100;
-          newData[countryCode] = {gdp: gdpChangePersentage, countryiso3code: countryCode};
+    Object.keys(apiData).forEach((countryCode) => {
+      const countryData = apiData[countryCode];
+      const firstYear = countryData[countryData.length - 1];
+      const lastYear = countryData[0];
+
+      if (firstYear && lastYear && countryData.length > 1) {
+        const firstValue = firstYear.value;
+        const lastValue = lastYear.value;
+        if (firstValue != null && lastValue != null) {
+          let changePercentage = ((lastValue / firstValue) - 1) * 100;
+
+          // Apply color logic based on the indicator type
+          if (indicator === 'gdp') {
+            newData[countryCode] = { value: changePercentage, countryiso3code: countryCode };
+          } else if (indicator === 'ur') {
+            // Inverse scale for Unemployment Rate: Higher values (more unemployment) in red
+            newData[countryCode] = { value: changePercentage, countryiso3code: countryCode };
+          } else if (indicator === 'cpi') {
+            // Consumer Price Index change
+            newData[countryCode] = { value: changePercentage, countryiso3code: countryCode };
+          }
         }
-        else {
-          newData[countryCode] = {gdp: null, countryiso3code: countryCode};
-        }
-      });
-      setData(newData);
+      } else {
+        newData[countryCode] = { value: null, countryiso3code: countryCode };
+      }
+    });
+
+    setData(newData);
   };
     
-  /// First checks which geography is which country with iso3 code
-  /// uses d3 linear color scale to get a color for the country based on the gdp persentage
-  /// Right now the scale is from -3 to 3 based on the normal yearly gpd change
-  const getCountryColor = (countryName) => {
-    const countryData = Object.values(data).flat().find((entry) => entry.countryiso3code === countryName);
-    if (!countryData) return "#EEE";
+  // First checks which geography is which country with iso3 code
 
-    const colorScale = scaleLinear().domain([-3,3]).range(["red", "green"]);
-    const { gdp: gdp } = countryData;
-    return colorScale(gdp);
+  const getCountryColor = (countryCode) => {
+    const countryData = data[countryCode];
+    if (!countryData || countryData.value === null) return "#EEE";
 
-  }
+    let colorScale;
+    if (indicator === 'gdp') {
+      // GDP Green for positive growth, red for negative growth
+      colorScale = scaleLinear().domain([-3, 3]).range(["red", "green"]);
+    } else if (indicator === 'ur') {
+      // Higher unemployment in red, lower in green
+      colorScale = scaleLinear().domain([3, -3]).range(["red", "green"]);
+    } else if (indicator === 'cpi') {
+      // Higher inflation in red, lower inflation in green
+      colorScale = scaleLinear().domain([-3, 3]).range(["green", "red"]);
+    }
+
+    return colorScale(countryData.value);
+  };
 
   return (
     <ComposableMap>
       <Geographies geography={geoUrl}>
         {({ geographies }) =>
           geographies.map((geo) => {
-            const countryName = geo.id;
+            const countryCode = geo.id;
             return (
               <Geography
                 key={geo.rsmKey}
                 geography={geo}
-                fill={getCountryColor(countryName)}
+                fill={getCountryColor(countryCode)}
                 style={{
                   default: { outline: "none" },
                   hover: { fill: "#2B6CB0", outline: "none", cursor: "pointer"},
