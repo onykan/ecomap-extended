@@ -8,37 +8,44 @@ const indicators =
     {
       code: 'NY.GDP.MKTP.KD',
       name: 'Gross domestic product',
-      id: 'GDP'
+      id: 'GDP',
+      quarterly: false
     },
     {
       code: 'NY.GDP.MKTP.CD',
       name: 'Gross domestic product, not adjusted for inflation',
-      id: 'GDPUSD'
+      id: 'GDPUSD',
+      quarterly: false
     },
     {
       code: 'SL.UEM.TOTL.ZS',
       name: 'Unemployment Rate',
-      id: 'UR'
+      id: 'UR',
+      quarterly: false
     },
     {
       code: 'FP.CPI.TOTL',
       name: 'Inflation Rate (Consumer Price Index - CPI)',
-      id: 'CPI'
+      id: 'CPI',
+      quarterly: false
     },
     {
       code: 'BX.GSR.GNFS.CD',
       name: 'Exports of goods and services (BoP, current US$)',
-      id: 'EXP'
+      id: 'EXP',
+      quarterly: false
     },
     {
       code: 'BM.GSR.GNFS.CD',
       name: 'Imports of goods and services (BoP, current US$)',
-      id: "IMP"
+      id: "IMP",
+      quarterly: false
     },
     {
       code: 'DP.DOD.DLD1.CR.GG.Z1',
       name: 'Gross PSD, General Gov.-D1, All maturities, Debt securities + loans, Nominal Value, % of GDP',
-      id: 'PSD'
+      id: 'PSD',
+      quarterly: true
     },
   ];
 
@@ -53,39 +60,29 @@ router.get('/indicators', async (_, res) => {
 
 router.get('/indicator/:id', async (req, res) => {
   const indId = req.params.id;
-  const indicator = indicators.find((ind) => ind.id.toLowerCase() === indId.toLowerCase());
-  if (indicator != undefined) {
-    let dateBeg = req.query.dateBeg || undefined;
-    let dateEnd = req.query.dateEnd || undefined;
+  const indicator = getIndicator(indId);
 
-    if (dateBeg === undefined && dateEnd === undefined) {
-      dateBeg = '';
-      dateEnd = '';
-    } else if (dateBeg === undefined) {
-      dateBeg = dateEnd;
-    } else if (dateEnd === undefined) {
-      dateEnd = dateBeg;
-    }
-
-    if (req.query.country == undefined || req.query.country == "all") {
-      const dataAllCountries = await getByIndicator("all", indicator.code, dateBeg, dateEnd);
-      if (dataAllCountries == undefined) {
-        res.status(404).json({ message: "No data found" });
-        return;
-      }
-      if (dataAllCountries.message != undefined) {
-        res.status(404).json({ message: dataAllCountries.message });
-        return;
-      }
-      let gdpMap = listAsMapByKey(dataAllCountries, "countryiso3code");
-      res.json(gdpMap);
-    } else {
-      const data = await getByIndicator(req.query.country, indicator.code, dateBeg, dateEnd);
-      res.json(data || {});
-    }
-  } else {
+  if (indicator == undefined) {
     res.status(404).json({ message: "Indicator not found" });
+    return;
   }
+
+  let dateBeg = req.query.dateBeg || undefined;
+  let dateEnd = req.query.dateEnd || undefined;
+
+  if (dateBeg === undefined && dateEnd === undefined) {
+    dateBeg = '';
+    dateEnd = '';
+  } else if (dateBeg === undefined) {
+    dateBeg = dateEnd;
+  } else if (dateEnd === undefined) {
+    dateEnd = dateBeg;
+  }
+
+  let country = (req.query.country) ? req.query.country : 'all';
+  const data = await getByIndicator(country, indicator.code, dateBeg, dateEnd);
+  resOrMsg(res, `No data found for country ${country}`, data, listAsMapByKey);
+  // resOrMsg(res, `No data found for country ${country}`, data, (data) => { return reduceResponse(listAsMapByKey(data)) });
 })
 
 // Path for minimal responses needed to display data layers on the map
@@ -93,7 +90,7 @@ router.get('/indicator/:id', async (req, res) => {
 // TODO: Precalculate and store commonly needed data
 router.get('/datalayer/:id', async (req, res) => {
   const indId = req.params.id;
-  const indicator = indicators.find((ind) => ind.id.toLowerCase() === indId.toLowerCase());
+  const indicator = getIndicator(indId);
 
   // TODO: Check if precalculated
 
@@ -122,11 +119,11 @@ router.get('/datalayer/:id', async (req, res) => {
     }
     let gdpMap = listAsMapByKey(dataAllCountries, "countryiso3code");
     gdpMap = reduceResponse(gdpMap, true);
-    res.json(gdpMap);
-  /*} else {
-      const data = await getByIndicator(req.query.country, indicator.code, dateBeg, dateEnd);
-      res.json(data || {});
-    }*/
+    res.status(200).json(gdpMap);
+    /*} else {
+        const data = await getByIndicator(req.query.country, indicator.code, dateBeg, dateEnd);
+        res.json(data || {});
+      }*/
   } else {
     res.status(404).json({ message: "Indicator not found" });
   }
@@ -142,11 +139,10 @@ router.get('/country/:code', async (req, res) => {
   if (countryCode == "all") {
     // TODO: maybe keep countries in memory or database for faster access
     const countries = await fetchDataApi(apiUrl + "/country");
-    res.json(countries);
+    res.status(200).json(countries);
   } else {
     const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
-    // TODO: maybe give the response a different status code if country not found
-    res.json(country || {});
+    resOrMsg(res, "No country found with given value", country);
   }
 })
 
@@ -159,25 +155,15 @@ router.get('/country/:code/incomelevel', async (req, res) => {
       incLevels[country.id] = country.incomeLevel;
       return incLevels;
     }, {});
-    res.json(incomeLevels);
+    res.status(200).json(incomeLevels);
   } else {
     const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
-    res.json(country?.incomeLevel || {});
+    resOrMsg(res, "No country found with given value", country);
   }
 })
 
-
 // Returns the plain response of the fetch in JSON
 async function fetchData(url, params = "") {
-  // let d = {
-  //   method: "GET",
-  //   withCredentials: true,
-  //   headers: {
-  //     "X-Auth-Token": "API_KEY",
-  //     "Content-Type": "application/json"
-  //   }
-  // }
-
   try {
     const fullUrl = url + "?" + params;
     const response = await fetch(fullUrl);
@@ -206,6 +192,27 @@ async function fetchDataApi(url, params = "") {
     }
   }
   return (data && data.length == 1) ? data[0] : data;
+}
+
+// Returns the indicator by indicator id if found, otherwise undefined
+function getIndicator(indId) {
+  return indicators.find((ind) => ind.id.toLowerCase() === indId.toLowerCase());
+}
+
+// Checks if the data is invalid
+// TODO: could be better
+function noData(data) {
+  return !data || data.hasOwnProperty('message')
+}
+
+// Sets response to be 404 with message if data is invalid.
+// Can also add a callback function to modify the response data if it's valid.
+function resOrMsg(res, message, data, dataModifyFunction = undefined) {
+  if (noData(data)) {
+    res.status(404).json({ message: message });
+  } else {
+    res.status(200).json((dataModifyFunction) ? dataModifyFunction(data) : data);
+  }
 }
 
 async function getIndicators() {
