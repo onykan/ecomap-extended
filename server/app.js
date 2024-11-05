@@ -6,7 +6,7 @@ require('dotenv').config({path: '../.env'});
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const HOSTNAME = process.env.HOSTNAME || 'localhost';
+const HOSTNAME = /*process.env.HOSTNAME ||*/ 'localhost';
 
 const start = Date.now();
 

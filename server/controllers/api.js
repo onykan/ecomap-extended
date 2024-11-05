@@ -49,6 +49,17 @@ const indicators =
     },
   ];
 
+const datalayers = {
+  gdp: {
+    indicator: "GDP",
+    formator: undefined
+  },
+  gdpchange: {
+    indicator: "GDP",
+    formator: gdpChangeFormator
+  }
+}
+
 
 router.get('/', async (req, res) => {
   res.json({});
@@ -85,48 +96,56 @@ router.get('/indicator/:id', async (req, res) => {
   // resOrMsg(res, `No data found for country ${country}`, data, (data) => { return reduceResponse(listAsMapByKey(data)) });
 })
 
-// Path for minimal responses needed to display data layers on the map
-// TODO: Add parameter to fetch data either indexed by iso3 or country name
+// Route for minimal responses needed to display data layers on the map
 // TODO: Precalculate and store commonly needed data
 router.get('/datalayer/:id', async (req, res) => {
-  const indId = req.params.id;
-  const indicator = getIndicator(indId);
+  const dataLayer = datalayers[req.params.id];
+  const indicator = getIndicator(dataLayer.indicator);
+
+  if (indicator === undefined) {
+    res.status(404).json({ message: "Map layer or the indicator associated with the selected layer was not found!" });
+    return;
+  }
 
   // TODO: Check if precalculated
 
-  if (indicator != undefined) {
-    let dateBeg = req.query.dateBeg || undefined;
-    let dateEnd = req.query.dateEnd || undefined;
+  let dateBeg = req.query.dateBeg || undefined;
+  let dateEnd = req.query.dateEnd || undefined;
 
-    if (dateBeg === undefined && dateEnd === undefined) {
-      dateBeg = '';
-      dateEnd = '';
-    } else if (dateBeg === undefined) {
-      dateBeg = dateEnd;
-    } else if (dateEnd === undefined) {
-      dateEnd = dateBeg;
-    }
-
-    //if (req.query.country == undefined || req.query.country == "all") {
-    const dataAllCountries = await getByIndicator("all", indicator.code, dateBeg, dateEnd);
-    if (dataAllCountries == undefined) {
-      res.status(404).json({ message: "No data found" });
-      return;
-    }
-    if (dataAllCountries.message != undefined) {
-      res.status(404).json({ message: dataAllCountries.message });
-      return;
-    }
-    let gdpMap = listAsMapByKey(dataAllCountries, "countryiso3code");
-    gdpMap = reduceResponse(gdpMap, true);
-    res.status(200).json(gdpMap);
-    /*} else {
-        const data = await getByIndicator(req.query.country, indicator.code, dateBeg, dateEnd);
-        res.json(data || {});
-      }*/
-  } else {
-    res.status(404).json({ message: "Indicator not found" });
+  if (dateBeg === undefined && dateEnd === undefined) {
+    dateBeg = '';
+    dateEnd = '2024'; // TODO: Find a way to find the most recent year of existing data
+  } else if (dateBeg === undefined) {
+    dateBeg = dateEnd;
+  } else if (dateEnd === undefined) {
+    dateEnd = dateBeg;
   }
+  // TODO: Query error correction
+
+  const dataAllCountries = await getByIndicator("all", indicator.code, dateBeg, dateEnd);
+  if (dataAllCountries === undefined) {
+    res.status(404).json({ message: "No data found" });
+    return;
+  }
+  if (dataAllCountries.message !== undefined) {
+    res.status(404).json({ message: dataAllCountries.message });
+    return;
+  }
+
+  let dataMap = listAsMapByKey(dataAllCountries, "countryiso3code");
+  dataMap = reduceResponse(dataMap);
+
+  if (dataLayer.formator !== undefined) {
+    let newObj = {};
+
+    for (let [country, dat] of Object.entries(dataMap)) {
+      newObj[country] = dataLayer.formator(dat, dateBeg, dateEnd);
+    }
+
+    dataMap = newObj;
+  }
+
+  res.status(200).json(dataMap);
 })
 
 router.get('/country', async (req, res) => {
@@ -239,17 +258,18 @@ function listAsMapByKey(dataList, key = "countryiso3code") {
 
 // Will reduce the response object to only contain the country iso3 code (or country name in case of 'useCountryName') nested with year-value pairs
 // Heavily assumes correct input format to be what *listAsMapByKey* returns
-// TODO: Consider simplifying data parsing and reduction
-function reduceResponse(objectOfAllIndicators, useCountryName = false) {
+function reduceResponse(objectOfAllIndicators) {
   let reducedResponse = {};
 
   for (let key in objectOfAllIndicators) {
+    /*
     let field;
     if (useCountryName) field = objectOfAllIndicators[key][0].country.value;
     else field = key;
-    if (field === undefined) continue;
+    */
+    if (key === undefined || key === '') continue;
 
-    reducedResponse[field] = objectOfAllIndicators[key].reduce((acc, cur) => ({ ...acc, [cur.date]: cur.value }), {});
+    reducedResponse[key] = objectOfAllIndicators[key].reduce((acc, cur) => ({ ...acc, [cur.date]: cur.value }), {});
   }
 
   return reducedResponse;
@@ -276,6 +296,13 @@ async function getMatchingIndicators(name) {
   }
   return inds;
 }
+
+
+// Formator function for calculating percentual gdp change
+function gdpChangeFormator(innerObj, yearBegin, yearEnd) {
+  return ((innerObj[yearEnd] / innerObj[yearBegin]) - 1) * 100;
+}
+
 
 async function main() {
   // const indicators = await getIndicators();

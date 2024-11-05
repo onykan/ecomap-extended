@@ -142,7 +142,7 @@
         const incomeLevels = await getIncomeLevels();
         console.log(incomeLevels);
 
-        const layerdata = await (await fetch("./api/datalayer/gdp?" + new URLSearchParams({
+        const layerdata = await (await fetch("./api/datalayer/gdpchange?" + new URLSearchParams({
             dateBeg: yBeg,
             dateEnd: yEnd,
         }).toString())).json();
