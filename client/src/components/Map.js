@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import axios from 'axios';
 import { scaleLinear } from "d3-scale";
-
+import CountryPanel from "./CountryPanel";
 
 const geoUrl =
   "https://raw.githubusercontent.com/lotusms/world-map-data/main/world.json";
@@ -10,6 +10,8 @@ const geoUrl =
 const Map = ({dateBeg, dateEnd, indicator}) => {
   const [data, setData] = useState([]);
   const [DynRangeGDP, setDynRangeGDP] = useState(3); // dynamic range for GDP growth
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   // Fetch data from api and parses it(for now) to the format that is used in the map
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +41,21 @@ const Map = ({dateBeg, dateEnd, indicator}) => {
     return colorScales[indicator](countryData);
   };
 
+  // Handle country click to open panel with country data
+  const handleCountryClick = (countryCode) => {
+    console.log("countryCode", countryCode);
+    const countryData = data[countryCode];
+    setSelectedCountry({ code: countryCode, ...countryData });
+    setIsPanelOpen(true);
+  };
+
+  const closePanel = () => {
+    setIsPanelOpen(false);
+    setSelectedCountry(null);
+  };
+
   return (
+    <>
     <ComposableMap>
       <Geographies geography={geoUrl}>
         {({ geographies }) =>
@@ -50,7 +66,7 @@ const Map = ({dateBeg, dateEnd, indicator}) => {
                 key={geo.rsmKey}
                 geography={geo}
                 fill={getCountryColor(countryCode)}
-                onClick={() => console.log(countryCode)}
+                onClick={() => handleCountryClick(countryCode)}                
                 style={{
                   default: { outline: "none" },
                   hover: { fill: "#2B6CB0", outline: "none", cursor: "pointer"},
@@ -63,6 +79,8 @@ const Map = ({dateBeg, dateEnd, indicator}) => {
       </Geographies>
       
     </ComposableMap>
+    <CountryPanel country={selectedCountry} isOpen={isPanelOpen} onClose={closePanel} />
+    </>
   );
 };
 
