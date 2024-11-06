@@ -6,7 +6,7 @@ import Map from './components/Map';
 const App = () => {
   const [dateBeg, setDateBeg] = useState('2022');
   const [dateEnd, setDateEnd] = useState('2023');
-  const [indicator, setIndicator] = useState('gdp');
+  const [indicator, setIndicator] = useState('gdpchange');
 
   return (
     <div>
