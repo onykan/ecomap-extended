@@ -80,6 +80,8 @@ router.get('/indicator/:id', async (req, res) => {
 
   let dateBeg = req.query.dateBeg || undefined;
   let dateEnd = req.query.dateEnd || undefined;
+  let mrv = req.query.mrv || undefined;
+  let reduced = req.query.reduced || undefined;
 
   if (dateBeg === undefined && dateEnd === undefined) {
     dateBeg = '';
@@ -91,9 +93,14 @@ router.get('/indicator/:id', async (req, res) => {
   }
 
   let country = (req.query.country) ? req.query.country : 'all';
-  const data = await getByIndicator(country, indicator.code, dateBeg, dateEnd);
+  const params = (mrv && Number(parseFloat(mrv)) == mrv) ? [mrv] : [dateBeg, dateEnd];
+  const data = await getByIndicator(country, indicator.code, ...params);
+
+  if (reduced || undefined) {
+    resOrMsg(res, `No data found for country ${country}`, data, (data) => { return reduceResponse(listAsMapByKey(data)) });
+    return;
+  }
   resOrMsg(res, `No data found for country ${country}`, data, listAsMapByKey);
-  // resOrMsg(res, `No data found for country ${country}`, data, (data) => { return reduceResponse(listAsMapByKey(data)) });
 })
 
 // Route for minimal responses needed to display data layers on the map
@@ -238,12 +245,25 @@ async function getIndicators() {
   return await fetchDataApi(apiUrl + "/indicators");
 }
 
-// TODO: maybe only include the country code and the asked indicator value to reduce the response size
-async function getByIndicator(countryCode = "all", indicator, yearBegin, yearEnd) {
+// Fetches values for given indicator based on the date range format.
+// If dateBeg and dateEnd are given, all the values between are fetched.
+// If mrv: int is given, mrv amount of most recent values are fetched.
+// mrv=1 returns only the most recent value for the indicator.
+async function getByIndicator(countryCode = "all", indicator, ...dateRangeParams) {
+  let queryParams = ``;
+  if (dateRangeParams.length == 1) {
+    const [mrv] = dateRangeParams;
+    queryParams = `mrv=${mrv}`;
+  }
+  else if (dateRangeParams.length == 2) {
+    const [dateBeg, dateEnd] = dateRangeParams;
+    queryParams = `date=${dateBeg}:${dateEnd}`;
+  }
   const url = `${apiUrl}/country/${countryCode}/indicator/${indicator}`;
-  return await fetchDataApi(url, `date=${yearBegin}:${yearEnd}`);
+  return await fetchDataApi(url, queryParams);
 }
 
+// Creates a hashmap from `dataList`, using each element's specified attribute as the key.
 function listAsMapByKey(dataList, key = "countryiso3code") {
   let map = {};
   for (let i = 0; i < dataList?.length; i++) {
