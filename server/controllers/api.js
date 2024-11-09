@@ -3,49 +3,56 @@ const router = require('express').Router();
 
 const apiUrl = "https://api.worldbank.org/v2";
 const maxPerPage = 10000;
+
+const Frequency = {
+  Yearly: 'Y',
+  Quarterly: 'Q',
+  Monthly: 'M'
+};
+
 const indicators =
   [
     {
       code: 'NY.GDP.MKTP.KD',
       name: 'Gross domestic product',
       id: 'GDP',
-      quarterly: false
+      frequency: Frequency.Yearly
     },
     {
       code: 'NY.GDP.MKTP.CD',
       name: 'Gross domestic product, not adjusted for inflation',
       id: 'GDPUSD',
-      quarterly: false
+      frequency: Frequency.Yearly
     },
     {
       code: 'SL.UEM.TOTL.ZS',
       name: 'Unemployment Rate',
       id: 'UR',
-      quarterly: false
+      frequency: Frequency.Yearly
     },
     {
       code: 'FP.CPI.TOTL',
       name: 'Inflation Rate (Consumer Price Index - CPI)',
       id: 'CPI',
-      quarterly: false
+      frequency: Frequency.Yearly
     },
     {
       code: 'BX.GSR.GNFS.CD',
       name: 'Exports of goods and services (BoP, current US$)',
       id: 'EXP',
-      quarterly: false
+      frequency: Frequency.Yearly
     },
     {
       code: 'BM.GSR.GNFS.CD',
       name: 'Imports of goods and services (BoP, current US$)',
       id: "IMP",
-      quarterly: false
+      frequency: Frequency.Yearly
     },
     {
       code: 'DP.DOD.DLD1.CR.GG.Z1',
       name: 'Gross PSD, General Gov.-D1, All maturities, Debt securities + loans, Nominal Value, % of GDP',
       id: 'PSD',
-      quarterly: true
+      frequency: Frequency.Quarterly
     },
   ];
 
@@ -60,6 +67,26 @@ const datalayers = {
   }
 }
 
+let isNumeric = (n) => Number(parseFloat(n)) == n;
+
+function validateYear(year) {
+  return isNumeric(year) && year >= 1920 && year <= 2024;
+}
+
+function validateDateRange(indicator, { dateBeg, dateEnd }) {
+  switch (indicator.frequency) {
+    case Frequency.Yearly:
+      return validateYear(dateBeg) && validateYear(dateEnd);
+    case Frequency.Quarterly: {
+      let reg = /\b(19|20)\d{2}Q|q[1-4]\b/;
+      return reg.test(dateBeg) && reg.test(dateEnd)
+    }
+    case Frequency.Monthly: {
+      let reg = /\b(19|20)\d{2}M|m[1-12]\b/;
+      return reg.test(dateBeg) && reg.test(dateEnd)
+    }
+  }
+}
 
 router.get('/', async (req, res) => {
   res.json({});
@@ -78,22 +105,24 @@ router.get('/indicator/:id', async (req, res) => {
     return;
   }
 
-  let dateBeg = req.query.dateBeg || undefined;
-  let dateEnd = req.query.dateEnd || undefined;
+  let dateBeg = req.query.dateBeg || '';
+  let dateEnd = req.query.dateEnd || '';
   let mrv = req.query.mrv || undefined;
   let reduced = req.query.reduced || undefined;
 
-  if (dateBeg === undefined && dateEnd === undefined) {
-    dateBeg = '';
-    dateEnd = '';
-  } else if (dateBeg === undefined) {
+  if (dateBeg === '') {
     dateBeg = dateEnd;
-  } else if (dateEnd === undefined) {
+  } else if (dateEnd === '') {
     dateEnd = dateBeg;
   }
 
+  if (!validateDateRange(indicator, { dateBeg, dateEnd }) && !mrv) {
+    res.status(400).json({ message: `Given date range not valid ${dateBeg} - ${dateEnd}` });
+    return;
+  }
+
   let country = (req.query.country) ? req.query.country : 'all';
-  const params = (mrv && Number(parseFloat(mrv)) == mrv) ? [mrv] : [dateBeg, dateEnd];
+  const params = (mrv && isNumeric(mrv)) ? [mrv] : [dateBeg, dateEnd];
   const data = await getByIndicator(country, indicator.code, ...params);
 
   if (reduced || undefined) {
@@ -170,6 +199,61 @@ router.get('/country/:code', async (req, res) => {
     const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
     resOrMsg(res, "No country found with given value", country);
   }
+})
+
+// Route to get the values from all the indicators for the country.
+// Date range is allowed. All data is returned if no range is given.
+// TODO: optimize
+router.get('/country/:code/data', async (req, res) => {
+  const country = req.params.code;
+
+  const countryData = await fetchDataApi(apiUrl + "/country/" + country);
+  if (noData(countryData)) {
+    res.status(404).json({ message: `No country found with given value '${country}'` });
+    return;
+  }
+
+  // TODO: needed?
+  let info = {
+    name: countryData['name'],
+    region: countryData['region']['value'],
+    capital: countryData['capital'],
+    longitude: countryData['longitude'],
+    latitude: countryData['latitude'],
+  };
+
+  let dateBeg = req.query.dateBeg || undefined;
+  let dateEnd = req.query.dateEnd || undefined;
+  let mrv = req.query.mrv || undefined;
+
+  if (!dateBeg || !dateEnd) {
+    mrv = mrv ? mrv : 200;
+  }
+  const params = (mrv && isNumeric(mrv)) ? [mrv] : [dateBeg, dateEnd];
+
+  let data = {
+    [country]: {
+      info: info,
+      indicators: {}
+    }
+  };
+
+  await Promise.all(indicators.map(async (indicator) => {
+    let req_params = params;
+    if (indicator.frequency == Frequency.Quarterly) {
+      if (params.length == 1) {
+        req_params[0] *= 4;
+      } else if (params.length == 2) {
+        req_params[0] += 'Q1';
+        req_params[1] += 'Q4';
+      }
+    }
+    let indData = await getByIndicator(country, indicator.code, ...req_params);
+    data[country]['indicators'][indicator.id] = reduceResponse(listAsMapByKey(indData))[country];
+  }));
+
+  resOrMsg(res, `No data found for country '${country}'`, data);
+  return;
 })
 
 router.get('/country/:code/incomelevel', async (req, res) => {
@@ -251,13 +335,18 @@ async function getIndicators() {
 // mrv=1 returns only the most recent value for the indicator.
 async function getByIndicator(countryCode = "all", indicator, ...dateRangeParams) {
   let queryParams = ``;
-  if (dateRangeParams.length == 1) {
-    const [mrv] = dateRangeParams;
-    queryParams = `mrv=${mrv}`;
-  }
-  else if (dateRangeParams.length == 2) {
-    const [dateBeg, dateEnd] = dateRangeParams;
-    queryParams = `date=${dateBeg}:${dateEnd}`;
+  if (dateRangeParams) {
+    if (dateRangeParams.length == 1) {
+      const [mrv] = dateRangeParams;
+      // TODO: preferred option
+      // gapfill = 'N' ignores NULL values
+      // gapfill = 'Y' gets all the values
+      queryParams = `mrv=${mrv}&gapfill=Y`;
+    }
+    else if (dateRangeParams.length == 2) {
+      const [dateBeg, dateEnd] = dateRangeParams;
+      queryParams = `date=${dateBeg}:${dateEnd}`;
+    }
   }
   const url = `${apiUrl}/country/${countryCode}/indicator/${indicator}`;
   return await fetchDataApi(url, queryParams);
