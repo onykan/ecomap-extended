@@ -201,8 +201,14 @@ router.get('/country/:code', async (req, res) => {
   }
 })
 
-// Route to get the values from all the indicators for the country.
-// Date range is allowed. All data is returned if no range is given.
+// Route to retrieve data and indicator values for a specified country.
+// Date range can be specified to filter the results, otherwise all the available indicator data is returned.
+// Query parameters:
+// - `dateBeg` (optional): Start year
+// - `dateEnd` (optional): End year. Both beg end end must be given to filter.
+// - `mrv` (optional): Most recent values (integer) overrides range specified with beg and end.
+// - `ind` (optional): Specify one or more indicator codes to only fetch data for those.
+//                     Multiple 'ind' params can be used to add indicators (`?ind=GDP&ind=UR`).
 // TODO: optimize
 router.get('/country/:code/data', async (req, res) => {
   const country = req.params.code;
@@ -222,6 +228,7 @@ router.get('/country/:code/data', async (req, res) => {
     latitude: countryData['latitude'],
   };
 
+  const inds = req.query.ind ? [].concat(req.query.ind) : undefined;
   let dateBeg = req.query.dateBeg || undefined;
   let dateEnd = req.query.dateEnd || undefined;
   let mrv = req.query.mrv || undefined;
@@ -239,17 +246,19 @@ router.get('/country/:code/data', async (req, res) => {
   };
 
   await Promise.all(indicators.map(async (indicator) => {
-    let req_params = params;
-    if (indicator.frequency == Frequency.Quarterly) {
-      if (params.length == 1) {
-        req_params[0] *= 4;
-      } else if (params.length == 2) {
-        req_params[0] += 'Q1';
-        req_params[1] += 'Q4';
+    if (!inds || inds.some((i) => i.toLowerCase() == indicator.id.toLowerCase())) {
+      let req_params = params;
+      if (indicator.frequency == Frequency.Quarterly) {
+        if (params.length == 1) {
+          req_params[0] *= 4;
+        } else if (params.length == 2) {
+          req_params[0] += 'Q1';
+          req_params[1] += 'Q4';
+        }
       }
+      let indData = await getByIndicator(country, indicator.code, ...req_params);
+      data[country]['indicators'][indicator.id] = reduceResponse(listAsMapByKey(indData))[country];
     }
-    let indData = await getByIndicator(country, indicator.code, ...req_params);
-    data[country]['indicators'][indicator.id] = reduceResponse(listAsMapByKey(indData))[country];
   }));
 
   resOrMsg(res, `No data found for country '${country}'`, data);
