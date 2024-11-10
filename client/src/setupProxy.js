@@ -1,17 +1,19 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
-// TODO: not loading the env vars
-// require('dotenv').config({ path: '../../.env' });
+require('dotenv').config({ path: '../.env' });
 const PROXY = process.env.REACT_APP_PROXY || 'localhost:3001';
-const targetServer = `http://${PROXY}/api`;
+const targetServer = `http://${PROXY}`;
+const routes = ['/api', '/uptime'];
 
 module.exports = function(app) {
   console.log(`Proxy on ${targetServer}`)
-  app.use(
-    '/api',
-    createProxyMiddleware({
-      target: targetServer,
-      changeOrigin: true,
-    })
-  );
+  routes.forEach((route) => {
+    app.use(
+      route,
+      createProxyMiddleware({
+        target: `${targetServer}${route}`,
+        changeOrigin: true,
+      })
+    );
+  });
 };
