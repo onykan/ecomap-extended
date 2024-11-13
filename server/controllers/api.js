@@ -63,7 +63,27 @@ const datalayers = {
   },
   gdpchange: {
     indicator: "GDP",
-    formator: gdpChangeFormator
+    formator: percentualChangeFormator
+  },
+  gdpaapc: {
+    indicator: "GDP",
+    formator: aapcFormator
+  },
+  ur: {
+    indicator: "UR",
+    formator: undefined
+  },
+  uraapc: {
+    indicator: "UR",
+    formator: aapcFormator
+  },
+  cpi: {
+    indicator: "CPI",
+    formator: undefined
+  },
+  cpiaapc: {
+    indicator: "CPI",
+    formator: aapcFormator
   }
 }
 
@@ -156,7 +176,11 @@ router.get('/datalayer/:id', async (req, res) => {
   } else if (dateEnd === undefined) {
     dateEnd = dateBeg;
   }
-  // TODO: Query error correction
+
+  if (!validateDateRange(indicator, { dateBeg, dateEnd })) {
+    res.status(400).json({ message: "Invalid date range" });
+    return;
+  }
 
   const dataAllCountries = await getByIndicator("all", indicator.code, dateBeg, dateEnd);
   if (dataAllCountries === undefined) {
@@ -416,9 +440,24 @@ async function getMatchingIndicators(name) {
 }
 
 
-// Formator function for calculating percentual gdp change
-function gdpChangeFormator(innerObj, yearBegin, yearEnd) {
+// Formator function for calculating percentual value change
+function percentualChangeFormator(innerObj, yearBegin, yearEnd) {
   return ((innerObj[yearEnd] / innerObj[yearBegin]) - 1) * 100;
+}
+
+// Formator function for calculating (unweighted) average annual percentage change
+function aapcFormator(innerObj, yearBegin, yearEnd) {
+  const begin = Number.parseInt(yearBegin);
+  const end = Number.parseInt(yearEnd);
+  if (begin === end) return 0;
+  let sum = 0;
+
+  for (let i = begin + 1; i <= end; i++) {
+    sum += (innerObj[i] - innerObj[i - 1]) / innerObj[i] * 100;
+    //console.log(i + " value: " + innerObj[i] + " sum: " + sum);
+  }
+
+  return sum / (end - begin);
 }
 
 
