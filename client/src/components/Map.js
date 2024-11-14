@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import { ComposableMap, Geographies, Geography, Sphere, Graticule } from "react-simple-maps";
 import axios from 'axios';
 import { scaleLinear } from "d3-scale";
 import CountryPanel from "./CountryPanel";
@@ -8,35 +8,33 @@ import { Tooltip } from 'react-tooltip';
 const geoUrl =
   "https://raw.githubusercontent.com/lotusms/world-map-data/main/world.json";
 
-const Map = ({dateBeg, dateEnd, indicator}) => {
+const Map = ({dateBeg, dateEnd, indicator, countryNames}) => {
   const [data, setData] = useState([]);
-  const [DynRangeGDP, setDynRangeGDP] = useState(3); // dynamic range for GDP growth
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [tooltipContent, setTooltipContent] = useState("");
 
-  // Fetch data from api and parses it(for now) to the format that is used in the map
+  // Fetch data from api
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const result = await axios.get(`/api/datalayer/${indicator}?dateBeg=${dateBeg}&dateEnd=${dateEnd}`);
+        const result = await axios.get(`/api/datalayer/${indicator}aapc?dateBeg=${dateBeg}&dateEnd=${dateEnd}`);
         setData(result.data);
-        setDynRangeGDP(3 * (dateEnd  - dateBeg));
       } catch (error) {
-
         console.error("Error fetching data:", error);
       }
     };
     fetchData();
   }, [dateBeg, dateEnd, indicator]);
-  
-    
-  //TODO: change logic based on indicator, add dynamic range or smth
+   
+  // Define color scales for each indicator
   const colorScales = {
-    gdpchange: scaleLinear().domain([-DynRangeGDP, DynRangeGDP]).range(["red", "green"]),
-    ur: scaleLinear().domain([3, -3]).range(["red", "green"]),
-    cpi: scaleLinear().domain([-3, 3]).range(["green", "red"]),
+    gdp: scaleLinear().domain([-3,3]).range(["red", "green"]),
+    //TODO: logic for ur
+    ur: scaleLinear().domain([1, -1]).range(["red", "green"]),
+    cpi: scaleLinear().domain([-1, 1, 10]).range(["red", "green", "red"]),
   };
+
   // choose color for the country
   const getCountryColor = (countryCode) => {
     const countryData = data[countryCode];
@@ -52,9 +50,12 @@ const Map = ({dateBeg, dateEnd, indicator}) => {
     setIsPanelOpen(true);
   };
 
+  // Handle mouse enter to show tooltip with country data
   const handleMouseEnter = (countryCode) => {
     const countryData = data[countryCode];
-    setTooltipContent(`Change: ${countryData ? (countryData.toFixed(1) + " %") : "No data"}`);
+    const countryName = countryNames[countryCode] || countryCode;
+    setTooltipContent(`${countryName}
+                       <br /> Yearly change: ${countryData ? (countryData.toFixed(1) + "%") : "No data"}`);
   }
 
   const closePanel = () => {
@@ -64,7 +65,10 @@ const Map = ({dateBeg, dateEnd, indicator}) => {
 
   return (
     <>
-      <ComposableMap data-tooltip-id="tip">
+      <ComposableMap data-tooltip-id="tip"
+                     data-tooltip-html={tooltipContent}>
+        <Sphere stroke="#EAEAEC" fill="#1a1a1a"/>
+        <Graticule stroke="white" strokeWidth={0.3}/>
         <Geographies geography={geoUrl}>
           {({ geographies }) =>
             geographies.map((geo) => {
@@ -90,7 +94,7 @@ const Map = ({dateBeg, dateEnd, indicator}) => {
           }
         </Geographies>  
       </ComposableMap>
-      <Tooltip id="tip" float={true} content={tooltipContent} />
+      <Tooltip id="tip" float={true} />
     
     <CountryPanel country={selectedCountry} isOpen={isPanelOpen} onClose={closePanel} />
     </>

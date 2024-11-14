@@ -62,7 +62,7 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
       <label>
         Indicator:
         <select value={indicator} onChange={(e) => setIndicator(e.target.value)}>
-          <option value="gdpchange">GDP</option>
+          <option value="gdp">GDP</option>
           <option value="ur">Unemployment Rate</option>
           <option value="cpi">Inflation Rate (CPI)</option>
         </select>
