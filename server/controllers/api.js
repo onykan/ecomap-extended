@@ -215,27 +215,26 @@ router.get('/country', async (req, res) => {
 
 router.get('/country/:code', async (req, res) => {
   const countryCode = req.params.code;
-  if (countryCode == "all") {
-    // TODO: maybe keep countries in memory or database for faster access
-    const countries = await fetchDataApi(apiUrl + "/country");
-    resOrMsg(res, "No country found with given value", countries);
-  } else {
-    const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
-    resOrMsg(res, "No country found with given value", country);
-  }
+  // TODO: maybe keep countries in memory or database for faster access
+  const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
+  resOrMsg(res, `No country found with given value '${countryCode}'`, country);
 })
 
+// Get country names as an object with iso3 codes as keys
 router.get('/country/:code/name', async (req, res) => {
   const countryCode = req.params.code;
-  if (countryCode == "all") {
-    const countries = await fetchDataApi(apiUrl + "/country");
-    const country_names = {};
-    countries.map((c) => { country_names[c['id']] = c['name']; });
-    resOrMsg(res, "No country found with given value", country_names);
-  } else {
-    const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
-    resOrMsg(res, "No country found with given value", { [country['id']]: country['name'] });
+  const country_data = await fetchDataApi(apiUrl + "/country/" + countryCode);
+  if (noData(country_data)) {
+    res.status(404).json({ message: `No country found with given value '${countryCode}'` });
+    return;
   }
+  const country_names = {};
+  if (Array.isArray(country_data)) {
+    country_data.map((c) => { country_names[c['id']] = c['name']; });
+  } else {
+    country_names[country_data['id']] = country_data['name'];
+  }
+  resOrMsg(res, `No country found with given value '${countryCode}'`, country_names);
 })
 
 // Route to retrieve data and indicator values for a specified country.
