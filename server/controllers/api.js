@@ -218,10 +218,23 @@ router.get('/country/:code', async (req, res) => {
   if (countryCode == "all") {
     // TODO: maybe keep countries in memory or database for faster access
     const countries = await fetchDataApi(apiUrl + "/country");
-    res.status(200).json(countries);
+    resOrMsg(res, "No country found with given value", countries);
   } else {
     const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
     resOrMsg(res, "No country found with given value", country);
+  }
+})
+
+router.get('/country/:code/name', async (req, res) => {
+  const countryCode = req.params.code;
+  if (countryCode == "all") {
+    const countries = await fetchDataApi(apiUrl + "/country");
+    const country_names = {};
+    countries.map((c) => { country_names[c['id']] = c['name']; });
+    resOrMsg(res, "No country found with given value", country_names);
+  } else {
+    const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
+    resOrMsg(res, "No country found with given value", { [country['id']]: country['name'] });
   }
 })
 
