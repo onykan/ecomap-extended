@@ -448,9 +448,14 @@ function predict_data(data, n, predictFunction) {
   const validData = Object.entries(data)
     .filter(([_, value]) => value !== null)
     .map(([year, value]) => [Number(year), value]);
-
+  console.log(validData);
   if (validData.length == 0 || !isNumeric(n) || n <= 0) return null;
-  return predictFunction(validData, n)
+  let predict_list = predictFunction(validData, n)
+  let predictions = predict_list.reduce((acc, [year, value]) => {
+    acc[year] = value;
+    return acc;
+  }, {});
+  return predictions;
 }
 
 // Regressor for linear regression
@@ -498,10 +503,10 @@ function linearRegressionPredict(data, yearsAhead) {
   const lastYear = Math.max(...years);
 
   let regressor = get_regressor(years, values);
-  const predictions = {};
+  const predictions = [];
   for (let i = 1; i <= yearsAhead; i++) {
     const futureYear = lastYear + i;
-    predictions[futureYear] = futureYear * regressor.slope + regressor.intercept;
+    predictions.push([futureYear, futureYear * regressor.slope + regressor.intercept]);
   }
   return predictions;
 }
@@ -515,10 +520,10 @@ function extrapolationPredict(data, yearsAhead) {
   const firstYearValue = values[years.indexOf(firstYear)];
   const lastYearValue = values[years.indexOf(lastYear)];
   const growthRate = (lastYearValue - firstYearValue) / (firstYearValue * (lastYear - firstYear));
-  const predictions = {};
+  const predictions = [];
   for (let i = 1; i <= yearsAhead; i++) {
     const futureYear = lastYear + i;
-    predictions[futureYear] = lastYearValue * ((1 + growthRate) ** i);
+    predictions.push([futureYear, lastYearValue * ((1 + growthRate) ** i)]);
   }
   return predictions;
 }
