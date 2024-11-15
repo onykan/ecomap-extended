@@ -301,82 +301,12 @@ router.get('/country/:code/data', async (req, res) => {
       let reduced = Object.assign({}, ...Object.values(reduceResponse(listAsMapByKey(indData))));
       data[country]['indicators'][indicator.id] = reduced;
       if (predict) {
-        data[country]['predict'][indicator.id] = linearRegressionPredict(reduced, predict)
+        data[country]['predict'][indicator.id] = predict_data(reduced, predict, linearRegressionPredict)
       }
     }
   }));
   resOrMsg(res, `No data found for country '${country}'`, data);
 })
-
-// Predicts the `yearsAhead` amount of years to the future.
-// Uses linear regression to make predictions.
-// Input and output data should be:
-// {
-//    2010: 123,
-//    2011: 1234,
-//    2012: 12345,
-//    ...
-// }
-function linearRegressionPredict(data, yearsAhead) {
-  const validData = Object.entries(data)
-    .filter(([_, value]) => value !== null)
-    .map(([year, value]) => [Number(year), value]);
-
-  const years = validData.map(([year]) => year);
-  const values = validData.map(([_, value]) => value);
-
-  const n = years.length;
-  if (n == 0 || !isNumeric(yearsAhead)) return null;
-  const lastYear = Math.max(...years);
-
-  const x_mean = years.reduce((a, b) => a + b, 0) / n;
-  const y_mean = values.reduce((a, b) => a + b, 0) / n;
-
-  let num = 0, den = 0;
-  for (let i = 0; i < n; i++) {
-    num += (years[i] - x_mean) * (values[i] - y_mean);
-    den += (years[i] - x_mean) ** 2;
-  }
-  const slope = num / den;
-  const intercept = y_mean - slope * x_mean;
-
-  const predictions = {};
-  for (let i = 1; i <= yearsAhead; i++) {
-    const futureYear = lastYear + i;
-    predictions[futureYear] = futureYear * slope + intercept;
-  }
-  return predictions;
-}
-
-
-// Extrapolates future data points based on the provided data.
-// Uses a simple growth rate calculation.
-// Input and output data should be:
-// {
-//    2010: 123,
-//    2011: 1234,
-//    2012: 12345,
-//    ...
-// }
-function extrapolationPredict(data, yearsAhead) {
-  const validData = Object.entries(data)
-    .filter(([_, value]) => value !== null)
-    .map(([year, value]) => [Number(year), value]);
-  const years = validData.map(([year]) => year);
-
-  const n = years.length;
-  if (n == 0 || !isNumeric(yearsAhead)) return null;
-  const firstYear = Math.min(...years);
-  const lastYear = Math.max(...years);
-  const growthRate = (data[lastYear] - data[firstYear]) / (data[firstYear] * (lastYear - firstYear));
-
-  const predictions = {};
-  for (let i = 1; i <= yearsAhead; i++) {
-    const futureYear = lastYear + i;
-    predictions[futureYear] = data[lastYear] * ((1 + growthRate) ** i);
-  }
-  return predictions;
-}
 
 router.get('/country/:code/incomelevel', async (req, res) => {
   const countryCode = req.params.code;
@@ -504,6 +434,76 @@ function reduceResponse(objectOfAllIndicators) {
   }
 
   return reducedResponse;
+}
+
+// Checks if data used for predicting is valid
+function predict_data(data, n, predictFunction) {
+  const validData = Object.entries(data)
+    .filter(([_, value]) => value !== null)
+    .map(([year, value]) => [Number(year), value]);
+
+  if (validData.length == 0 || !isNumeric(n) || n <= 0) return null;
+  return predictFunction(validData, n)
+}
+
+// Predicts the `yearsAhead` amount of years to the future.
+// Uses linear regression to make predictions.
+// Input and output data should be:
+// {
+//    2010: 123,
+//    2011: 1234,
+//    2012: 12345,
+//    ...
+// }
+function linearRegressionPredict(data, yearsAhead) {
+  const years = data.map(([year]) => year);
+  const values = data.map(([_, value]) => value);
+  const lastYear = Math.max(...years);
+
+  let n = years.length;
+  const x_mean = years.reduce((a, b) => a + b, 0) / n;
+  const y_mean = values.reduce((a, b) => a + b, 0) / n;
+
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (years[i] - x_mean) * (values[i] - y_mean);
+    den += (years[i] - x_mean) ** 2;
+  }
+  const slope = num / den;
+  const intercept = y_mean - slope * x_mean;
+
+  const predictions = {};
+  for (let i = 1; i <= yearsAhead; i++) {
+    const futureYear = lastYear + i;
+    predictions[futureYear] = futureYear * slope + intercept;
+  }
+  return predictions;
+}
+
+
+// Extrapolates future data points based on the provided data.
+// Uses a simple growth rate calculation.
+// Input and output data should be:
+// {
+//    2010: 123,
+//    2011: 1234,
+//    2012: 12345,
+//    ...
+// }
+function extrapolationPredict(data, yearsAhead) {
+  const years = data.map(([year]) => year);
+  const values = data.map(([_, value]) => value);
+  const firstYear = Math.min(...years);
+  const lastYear = Math.max(...years);
+  const firstYearValue = values[years.indexOf(firstYear)];
+  const lastYearValue = values[years.indexOf(lastYear)];
+  const growthRate = (lastYearValue - firstYearValue) / (firstYearValue * (lastYear - firstYear));
+  const predictions = {};
+  for (let i = 1; i <= yearsAhead; i++) {
+    const futureYear = lastYear + i;
+    predictions[futureYear] = lastYearValue * ((1 + growthRate) ** i);
+  }
+  return predictions;
 }
 
 async function getIndicatorID(name) {
