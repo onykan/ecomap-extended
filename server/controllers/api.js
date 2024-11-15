@@ -292,13 +292,13 @@ router.get('/country/:code/data', async (req, res) => {
           req_params[1] += 'Q4';
         }
       }
-      let indData = await getByIndicator(country, indicator.code, ...req_params);
-      data[country]['indicators'][indicator.id] = reduceResponse(listAsMapByKey(indData))[country];
+      let indData = await getByIndicator(country, indicator.code, ...params);
+      // TODO: can probably be optimized more
+      let reduced = reduceResponse(listAsMapByKey(indData));
+      data[country]['indicators'][indicator.id] = Object.assign({}, ...Object.values(reduced));
     }
   }));
-
   resOrMsg(res, `No data found for country '${country}'`, data);
-  return;
 })
 
 router.get('/country/:code/incomelevel', async (req, res) => {
