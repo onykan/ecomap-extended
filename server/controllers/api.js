@@ -436,7 +436,14 @@ function reduceResponse(objectOfAllIndicators) {
   return reducedResponse;
 }
 
-// Checks if data used for predicting is valid
+// Predicts the `n` amount of years to the future.
+// Input and output data should be:
+// {
+//    2010: 123,
+//    2011: 1234,
+//    2012: 12345,
+//    ...
+// }
 function predict_data(data, n, predictFunction) {
   const validData = Object.entries(data)
     .filter(([_, value]) => value !== null)
@@ -446,50 +453,60 @@ function predict_data(data, n, predictFunction) {
   return predictFunction(validData, n)
 }
 
-// Predicts the `yearsAhead` amount of years to the future.
+// Regressor for linear regression
+function get_regressor(x_values, y_values) {
+  regressor = {};
+  let n = x_values.length;
+  const x_mean = x_values.reduce((a, b) => a + b, 0) / n;
+  const y_mean = y_values.reduce((a, b) => a + b, 0) / n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (x_values[i] - x_mean) * (y_values[i] - y_mean);
+    den += (x_values[i] - x_mean) ** 2;
+  }
+  const slope = num / den;
+  const intercept = y_mean - slope * x_mean;
+  regressor.slope = slope;
+  regressor.intercept = intercept;
+  return regressor;
+}
+
+// Fits linear regression to data
+function linearRegressionFit(x_values, regressor) {
+  let y_hat = [];
+  for (let i = 0; i < x_values.length; i++) {
+    y_hat.push(x_values[i] * regressor.slope + regressor.intercept);
+  }
+  return y_hat;
+}
+
+// Calculates R squared prediction error for linear regression fit
+function r2_score(y_values, predictions) {
+  let rss = 0, tss = 0;
+  let y_mean = y_values.reduce((a, b) => a + b) / y_values.length;
+  for (i = 0; i < y_values.length; i++) {
+    rss += (predictions[i] - y_values[i]) ** 2;
+    tss += (predictions[i] - y_mean) ** 2;
+  }
+  return 1 - rss / tss;
+}
+
 // Uses linear regression to make predictions.
-// Input and output data should be:
-// {
-//    2010: 123,
-//    2011: 1234,
-//    2012: 12345,
-//    ...
-// }
 function linearRegressionPredict(data, yearsAhead) {
   const years = data.map(([year]) => year);
   const values = data.map(([_, value]) => value);
   const lastYear = Math.max(...years);
 
-  let n = years.length;
-  const x_mean = years.reduce((a, b) => a + b, 0) / n;
-  const y_mean = values.reduce((a, b) => a + b, 0) / n;
-
-  let num = 0, den = 0;
-  for (let i = 0; i < n; i++) {
-    num += (years[i] - x_mean) * (values[i] - y_mean);
-    den += (years[i] - x_mean) ** 2;
-  }
-  const slope = num / den;
-  const intercept = y_mean - slope * x_mean;
-
+  let regressor = get_regressor(years, values);
   const predictions = {};
   for (let i = 1; i <= yearsAhead; i++) {
     const futureYear = lastYear + i;
-    predictions[futureYear] = futureYear * slope + intercept;
+    predictions[futureYear] = futureYear * regressor.slope + regressor.intercept;
   }
   return predictions;
 }
 
-
 // Extrapolates future data points based on the provided data.
-// Uses a simple growth rate calculation.
-// Input and output data should be:
-// {
-//    2010: 123,
-//    2011: 1234,
-//    2012: 12345,
-//    ...
-// }
 function extrapolationPredict(data, yearsAhead) {
   const years = data.map(([year]) => year);
   const values = data.map(([_, value]) => value);
