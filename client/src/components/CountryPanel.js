@@ -10,15 +10,27 @@ ChartJS.register(
   PointElement,
   Title,
   Tooltip,
-  Legend
+  Legend, 
+  plugins
 );
 
 const CountryPanel = ({ country, isOpen, onClose }) => {
   const [countryData, setCountryData] = useState([]);
-  const [chartData, setChartData] = useState({});
-
+  const [chartData, setChartData] = useState({
+    labels: [1,2,3],
+    datasets: [
+      {
+        label: 'Loading...',
+        data: [0,0,0],
+        borderColor: 'rgba(75,192,192,1)',
+      }
+    ]
+  });
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
+    setLoading(true);
     if (country && isOpen) {
+      try {
       axios.get(`/api/country/${country.code}/data`)
         .then((response) => {
           const data = response.data[country.code].info;
@@ -44,8 +56,12 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             datasets: datasets,
           })
         }
-        
       );
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
     }
   }
   , [country, isOpen]);
@@ -60,6 +76,10 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
       text: 'GDP of Country',
       }
   }}
+
+  if (!chartData) {
+    return null;
+  }
 
   return (
     <div
@@ -76,12 +96,16 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
         padding: isOpen ? "20px" : "0px",
       }}
     >
+
       {isOpen && chartData && (
         <div>
           <button onClick={onClose} style={{ float: "right" }}>Close</button>
           <h2>Country: {country.code}</h2>
           <p>Indicator Value: {country.value}</p>
-          <Line data={chartData} options={options}/>
+
+            <Line data={chartData} options={options}/>
+          
+          
         </div>
       )}
     </div>
