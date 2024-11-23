@@ -300,7 +300,7 @@ router.get('/country/:code/data', async (req, res) => {
           req_params[1] += 'Q4';
         }
       }
-      let indData = await getByIndicator(country, indicator.code, ...params);
+      let indData = await getByIndicator(country, indicator.code, ...req_params);
       // TODO: can probably be optimized more
       let reduced = Object.assign({}, ...Object.values(reduceResponse(listAsMapByKey(indData))));
       data[country]['indicators'][indicator.id] = reduced;

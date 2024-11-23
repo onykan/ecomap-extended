@@ -1,5 +1,93 @@
 const { isNumeric } = require("./utils.js");
 
+
+function convertYear(year) {
+  if (isNumeric(year)) {
+    return Number(year);
+  }
+  return year;
+}
+
+// "2024Q1" -> 202401
+function convertQuarterly(yearQ) {
+  let iQ = yearQ.indexOf('Q');
+  if (iQ !== -1) {
+    return Number(yearQ.substring(0, iQ) + '0' + yearQ.substring(iQ + 1));
+  }
+  return yearQ;
+}
+
+// "2024M12" -> 2024012
+function convertMonthly(yearM) {
+  let iM = yearM.indexOf('M');
+  if (iM !== -1) {
+    return Number(yearM.substring(0, iM) + '0' + yearM.substring(iM + 1));
+  }
+  return yearM;
+}
+
+// Way too complicated but works
+function unconvertData(data, entriesInYear, { year, letter, digit }, decrease = false) {
+  let nextYear = year;
+  let nextSuf;
+  if (decrease) {
+    nextSuf = digit - 1;
+    if (nextSuf <= 0) {
+      nextSuf = entriesInYear;
+      nextYear--;
+    }
+  } else {
+    nextSuf = (digit % entriesInYear) + 1;
+  }
+  let changeYear = (decrease)
+    ? (nextS, nextY, eInY) => {
+      if (nextS <= 0) {
+        nextS = eInY;
+        nextY--;
+      }
+      return [nextS, nextY];
+    }
+    : (nextS, nextY, eInY) => {
+      if (nextS > eInY) {
+        nextS = 1;
+        nextY++;
+      }
+      return [nextS, nextY];
+    };
+
+  let unconvData = data.reduce((acc, [y, value]) => {
+    if (entriesInYear == 1) {
+      acc[y] = value;
+      return acc;
+    }
+    [nextSuf, nextYear] = changeYear(nextSuf, nextYear, entriesInYear);
+    acc[nextYear.toString() + letter + nextSuf] = value;
+    nextSuf += (decrease ? -1 : 1);
+    return acc;
+  }, {});
+
+  return unconvData;
+}
+
+// Converts the data suitable for the predict functions
+function convertData(data) {
+  let entriesInYear = 1;
+  let convertYearF = convertYear;
+
+  const year = Object.keys(data)[0];
+  if (year && year.includes('Q')) {
+    entriesInYear = 4;
+    convertYearF = convertQuarterly;
+  } else if (year && year.includes('M')) {
+    entriesInYear = 12;
+    convertYearF = convertMonthly;
+  }
+  const convData = Object.entries(data)
+    .filter(([_, value]) => value !== null)
+    .map(([year, value]) => [convertYearF(year), value]);
+  return [entriesInYear, convData];
+}
+
 // Predicts the `n` amount of years using the given predictFunction
 // Input and output data should be:
 // {
@@ -8,17 +96,21 @@ const { isNumeric } = require("./utils.js");
 //    2012: 12345,
 //    ...
 // }
-// TODO: handle quarterly years
 function predict_data(data, n, predictFunction) {
-  const validData = Object.entries(data)
-    .filter(([_, value]) => value !== null)
-    .map(([year, value]) => [Number(year), value]);
+  const [entriesInYear, validData] = convertData(data);
+  n *= entriesInYear;
   if (validData.length == 0 || !isNumeric(n) || n <= 0) return null;
   let predict_list = predictFunction(validData, n)
-  let predictions = predict_list.reduce((acc, [year, value]) => {
-    acc[year] = value;
-    return acc;
-  }, {});
+  const years = validData.map(([year]) => year);
+  const yearsPred = predict_list.map(([y, _]) => y);
+  const decrease = Math.max(...yearsPred) < Math.min(...years);
+  let lastYear = (decrease) ? Math.min(...years) : Math.max(...years);
+  let letter = entriesInYear === 4 ? 'Q' : entriesInYear === 12 ? 'M' : '';
+  let connYear = { year: lastYear, letter: "", digit: -1 };
+  if (entriesInYear > 1) {
+    connYear = { year: Number(lastYear.toString().substring(0, 4)), letter: letter, digit: Number(lastYear.toString()[5]) };
+  }
+  let predictions = unconvertData(predict_list, entriesInYear, connYear, decrease);
   return predictions;
 }
 
