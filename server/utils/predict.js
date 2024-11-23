@@ -2,28 +2,17 @@ const { isNumeric } = require("./utils.js");
 
 
 function convertYear(year) {
-  if (isNumeric(year)) {
-    return Number(year);
-  }
-  return year;
+  return Number(year);
 }
 
 // "2024Q1" -> 202401
 function convertQuarterly(yearQ) {
-  let iQ = yearQ.indexOf('Q');
-  if (iQ !== -1) {
-    return Number(yearQ.substring(0, iQ) + '0' + yearQ.substring(iQ + 1));
-  }
-  return yearQ;
+  return Number(yearQ.toString().replace(/Q|q/, 0));
 }
 
 // "2024M12" -> 2024012
 function convertMonthly(yearM) {
-  let iM = yearM.indexOf('M');
-  if (iM !== -1) {
-    return Number(yearM.substring(0, iM) + '0' + yearM.substring(iM + 1));
-  }
-  return yearM;
+  return Number(yearM.toString().replace(/M|m/, 0));
 }
 
 // Way too complicated but works
