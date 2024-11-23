@@ -1,6 +1,6 @@
 const { isNumeric } = require("./utils.js");
 
-// Predicts the `n` amount of years to the future.
+// Predicts the `n` amount of years using the given predictFunction
 // Input and output data should be:
 // {
 //    2010: 123,
@@ -60,7 +60,7 @@ function r2_score(y_values, predictions) {
   return 1 - rss / tss;
 }
 
-// Uses linear regression to make predictions.
+// Uses linear regression to make predictions
 function linearRegressionPredict(data, yearsAhead) {
   const years = data.map(([year]) => year);
   const values = data.map(([_, value]) => value);
@@ -75,7 +75,22 @@ function linearRegressionPredict(data, yearsAhead) {
   return predictions;
 }
 
-// Extrapolates future data points based on the provided data.
+// Uses linear regression to make predictions to the past
+function linearRegressionPredictPast(data, yearsPast) {
+  const years = data.map(([year]) => year);
+  const values = data.map(([_, value]) => value);
+  const earliestYear = Math.min(...years);
+
+  let regressor = get_regressor(years, values);
+  const predictions = [];
+  for (let i = 1; i <= yearsPast; i++) {
+    const pastYear = earliestYear - i;
+    predictions.push([pastYear, pastYear * regressor.slope + regressor.intercept]);
+  }
+  return predictions;
+}
+
+// Extrapolates future data points based on the provided data
 function extrapolationPredict(data, yearsAhead) {
   const years = data.map(([year]) => year);
   const values = data.map(([_, value]) => value);
@@ -92,4 +107,4 @@ function extrapolationPredict(data, yearsAhead) {
   return predictions;
 }
 
-module.exports = { predict_data, linearRegressionPredict, extrapolationPredict, linearRegressionFit, r2_score, get_regressor };
+module.exports = { predict_data, linearRegressionPredict, linearRegressionPredictPast, extrapolationPredict, linearRegressionFit, r2_score, get_regressor };

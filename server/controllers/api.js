@@ -1,4 +1,4 @@
-const { predict_data, linearRegressionPredict } = require("../utils/predict.js");
+const { predict_data, linearRegressionPredict, linearRegressionPredictPast } = require("../utils/predict.js");
 const { isNumeric } = require("../utils/utils.js");
 
 const router = require('express').Router();
@@ -268,6 +268,7 @@ router.get('/country/:code/data', async (req, res) => {
   let dateEnd = req.query.dateEnd || undefined;
   let mrv = req.query.mrv || undefined;
   let predict = req.query.predict || undefined;
+  let predict_past = req.query.predict_past || undefined;
 
   if (!dateBeg || !dateEnd) {
     mrv = mrv ? mrv : 200;
@@ -280,8 +281,12 @@ router.get('/country/:code/data', async (req, res) => {
       indicators: {}
     }
   };
+
   if (predict) {
     data[country]['predict'] = {};
+  }
+  if (predict_past) {
+    data[country]['predict_past'] = {};
   }
 
   await Promise.all(indicators.map(async (indicator) => {
@@ -301,6 +306,9 @@ router.get('/country/:code/data', async (req, res) => {
       data[country]['indicators'][indicator.id] = reduced;
       if (predict) {
         data[country]['predict'][indicator.id] = predict_data(reduced, predict, linearRegressionPredict)
+      }
+      if (predict_past) {
+        data[country]['predict_past'][indicator.id] = predict_data(reduced, predict_past, linearRegressionPredictPast)
       }
     }
   }));
