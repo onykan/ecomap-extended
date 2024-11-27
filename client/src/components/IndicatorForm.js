@@ -3,7 +3,10 @@ import React, { useRef, useState } from 'react';
 const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, setIndicator }) => {
   const dateBegRef = useRef(null);
   const dateEndRef = useRef(null);
+  const indicatorRef = useRef(null);
   const [error, setError] = useState('');
+  const [currentDateBeg, setCurrentDateBeg] = useState(dateBeg);
+  const [currentDateEnd, setCurrentDateEnd] = useState(dateEnd);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -11,11 +14,13 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
     if (validateValues()) {
       const newDateBeg = dateBegRef.current.value;
       const newDateEnd = dateEndRef.current.value;
+      const newIndicator = indicatorRef.current.value;
 
       setDateBeg(newDateBeg);
       setDateEnd(newDateEnd);
+      setIndicator(newIndicator);
       
-      console.log({ dateBeg: newDateBeg, dateEnd: newDateEnd });
+      console.log({ dateBeg: newDateBeg, dateEnd: newDateEnd, indicator: newIndicator });
     }
   };
 
@@ -24,7 +29,7 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
     const newDateEnd = dateEndRef.current.value;
 
     if (newDateBeg > newDateEnd) {
-      setError('Start year should be before end year');
+      setError('Start year should be before or same as end year');
       return false;
     }
     if (newDateEnd - newDateBeg > 30) {
@@ -40,28 +45,30 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
       <label>
         Begin year:
         <input
-          type="number"
+          type="range"
           name="dateBeg"
           ref={dateBegRef}
           defaultValue={dateBeg}
           min="1960"
           max="2023"
+          onChange={() => setCurrentDateBeg(dateBegRef.current.value)}
         />
+        <span>{currentDateBeg}</span>
       </label>
       <label>
         End year:
         <input
-          type="number"
+          type="range"
           name="dateEnd"
           ref={dateEndRef}
           defaultValue={dateEnd}
           min="1960"
           max="2023"
+          onChange={() => setCurrentDateEnd(dateEndRef.current.value)}
         />
-      </label>
-      <label>
+        <span>{currentDateEnd}</span>
         Indicator:
-        <select value={indicator} onChange={(e) => setIndicator(e.target.value)}>
+        <select ref={indicatorRef} defaultValue={indicator}>
           <option value="gdp">GDP</option>
           <option value="ur">Unemployment Rate</option>
           <option value="cpi">Inflation Rate (CPI)</option>

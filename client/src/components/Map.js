@@ -35,14 +35,14 @@ const Map = ({dateBeg, dateEnd, indicator, countryNames}) => {
    
   // Define color scales for each indicator
   const colorScales = {
-    gdp: scaleLinear().domain([-3,3]).range(["red", "green"]),
-    ur: scaleLinear().domain([1, -1]).range(["red", "green"]),
-    cpi: scaleLinear().domain([-1, 1, 10]).range(["red", "green", "red"]),
+    gdp: scaleLinear().domain([-8,0,8]).range(["red", "white", "green"]),
+    ur: scaleLinear().domain([10, 0, -2]).range(["red", "white", "green"]).clamp(true),
+    cpi: scaleLinear().domain([-2, 0, 2, 4, 7]).range(["red", "white", "green", "white", "red"]),
     //if (yearIsSame) we need to use different color scale
-    gdpC: scaleLinear().domain([0,300000000000]).range(["red", "green"]),
+    gdpC: scaleLinear().domain([0, 100000000000, 500000000000]).range(["red", "white", "green"]).clamp(true),
     //TODO fix color scale for urC and cpiC
-    urC: scaleLinear().domain([1, -1]).range(["red", "green"]),
-    cpiC: scaleLinear().domain([-1, 1, 10]).range(["red", "green", "red"]),
+    urC: scaleLinear().domain([3, 7, 15]).range(["green", "white", "red"]),
+    cpiC: scaleLinear().domain([-1, 1]).range(["white", "white"]),
   };
 
   // choose color for the country
