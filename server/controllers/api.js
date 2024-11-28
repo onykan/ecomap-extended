@@ -17,42 +17,49 @@ const indicators =
     {
       code: 'NY.GDP.MKTP.KD',
       name: 'Gross domestic product',
+      description: 'Gross domestic product, adjusted for inflation (US$)',
       id: 'GDP',
       frequency: Frequency.Yearly
     },
     {
       code: 'NY.GDP.MKTP.CD',
-      name: 'Gross domestic product, not adjusted for inflation',
+      name: 'Gross domestic product',
+      description: 'Gross domestic product, not adjusted for inflation (US$)',
       id: 'GDPUSD',
       frequency: Frequency.Yearly
     },
     {
       code: 'SL.UEM.TOTL.ZS',
       name: 'Unemployment Rate',
+      description: 'Unemployment, total (% of total labor force)',
       id: 'UR',
       frequency: Frequency.Yearly
     },
     {
       code: 'FP.CPI.TOTL',
-      name: 'Inflation Rate (Consumer Price Index - CPI)',
+      name: 'Inflation Rate',
+      description: 'Consumer Price Index - CPI',
       id: 'CPI',
       frequency: Frequency.Yearly
     },
     {
       code: 'BX.GSR.GNFS.CD',
-      name: 'Exports of goods and services (BoP, current US$)',
+      name: 'Exports',
+      description: 'Exports of goods and services (BoP, current US$)',
       id: 'EXP',
       frequency: Frequency.Yearly
     },
     {
       code: 'BM.GSR.GNFS.CD',
-      name: 'Imports of goods and services (BoP, current US$)',
+      name: 'Imports',
+      description: 'Imports of goods and services (BoP, current US$)',
       id: "IMP",
       frequency: Frequency.Yearly
     },
     {
       code: 'DP.DOD.DLD1.CR.GG.Z1',
-      name: 'Gross PSD, General Gov.-D1, All maturities, Debt securities + loans, Nominal Value, % of GDP',
+      name: 'Public Sector Debt',
+      description: 'Gross PSD, General Gov.-D1, All maturities, Debt securities + loans, Nominal Value, % of GDP',
       id: 'PSD',
       frequency: Frequency.Quarterly
     },
@@ -513,8 +520,8 @@ async function main() {
   // const finGDB = await getByIndicator("FIN", gdpID, 2010, 2012);
   // console.log(finGDB);
 
-  //const inds = await getMatchingIndicators("");
-  //inds.forEach((ind) => console.log(ind));
+  // const inds = await getMatchingIndicators("");
+  // inds.forEach((ind) => console.log(ind));
 }
 
 // main();
