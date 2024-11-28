@@ -1,8 +1,9 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 require('dotenv').config({ path: '../.env' });
-const PROXY = process.env.REACT_APP_PROXY || 'localhost:3001';
-const targetServer = `http://${PROXY}`;
+const PROXY = process.env.REACT_APP_PROXY || 'localhost';
+const PROXY_PORT = process.env.REACT_APP_PROXY_PORT || '3001';
+const targetServer = `http://${PROXY}:${PROXY_PORT}`;
 const routes = ['/api', '/uptime'];
 
 module.exports = function(app) {
