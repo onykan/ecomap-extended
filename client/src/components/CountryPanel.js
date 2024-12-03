@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
+import zoomPlugin from "chartjs-plugin-zoom";
 import { CategoryScale, Chart as ChartJS, LinearScale, LineElement, PointElement, Title, Tooltip, Legend, plugins } from 'chart.js';
 
 ChartJS.register(
@@ -11,11 +12,13 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  plugins
+  plugins,
+  zoomPlugin
 );
 
 const CountryPanel = ({ country, isOpen, onClose }) => {
   const predictRef = useRef(null);
+  const chartRef = useRef(null);
   const [predictYears, setPredict] = useState(0);
   const [predictData, setPredictData] = useState({ labels: [], datasets: [] });
   const [countryData, setCountryData] = useState([]);
@@ -33,6 +36,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
   useEffect(() => {
     setLoading(true);
     if (country && isOpen) {
+      chartRef.current.resetZoom();
       try {
         axios.get(`/api/country/${country.code}/data`)
           .then((response) => {
@@ -71,15 +75,29 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
     , [country, isOpen]);
 
   const options = {
-
     responsive: true,
     plugins: {
       legend: { position: "top" },
       title: {
         display: true,
         text: 'GDP of Country',
+      },
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: "x"
+        },
+        zoom: {
+          wheel: {
+            enabled: true
+          },
+          pinch: {
+            enabled: true
+          },
+          mode: "x"
+        }
       }
-    }
+    },
   }
 
   if (!chartData) {
@@ -191,7 +209,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             <input type="submit" value="Submit" />
           </form>
 
-          <Line data={chartData} options={options} />
+          <Line ref={chartRef} data={chartData} options={options} />
 
 
         </div>
