@@ -97,7 +97,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           const predict = response.data[country.code].predict;
           const indData = response.data[country.code].indicators;
 
-          const labelsData = Object.keys(indData.GDP);
+          const labelsData = Object.keys(indData.GDP).map(e => Number(e));
           const datasetsData = Object.keys(indData).map((key) => {
             return {
               label: key,
@@ -114,9 +114,8 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             return;
           }
 
-          // TODO: get last year from data
-          let lastYear = 2023;
-          let labels = [lastYear];
+          let lastYear = Math.max(...labelsData);
+          let labels = [];
           for (let i = 1; i <= pYears; i++) {
             labels.push(lastYear + i);
           }
@@ -183,7 +182,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
                 type="number"
                 name="predict"
                 min={0}
-                max={10}
+                max={20}
                 ref={predictRef}
                 defaultValue={predictYears}
                 onChage={() => setPredict(predictRef.current.value)}

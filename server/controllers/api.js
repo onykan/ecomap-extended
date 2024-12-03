@@ -315,7 +315,8 @@ router.get('/country/:code/data', async (req, res) => {
       if (predict) {
         if (compress && indicator.frequency != Frequency.Yearly) {
           let predicted = predict_data(reduced, predict, linearRegressionPredict);
-          data[country]['predict'][indicator.id] = compressToYearly(predicted);
+          let compressed = compressToYearly(predicted);
+          data[country]['predict'][indicator.id] = Object.fromEntries(Object.entries(compressed).slice(0, predict))
         } else {
           data[country]['predict'][indicator.id] = predict_data(reduced, predict, linearRegressionPredict)
         }
