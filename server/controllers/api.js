@@ -1,5 +1,5 @@
 const { predict_data, linearRegressionPredict, linearRegressionPredictPast } = require("../utils/predict.js");
-const { isNumeric } = require("../utils/utils.js");
+const { isNumeric, compressToYearly } = require("../utils/utils.js");
 
 const router = require('express').Router();
 
@@ -274,6 +274,7 @@ router.get('/country/:code/data', async (req, res) => {
   let dateBeg = req.query.dateBeg || undefined;
   let dateEnd = req.query.dateEnd || undefined;
   let mrv = req.query.mrv || undefined;
+  let compress = req.query.compress || undefined;
   let predict = req.query.predict || undefined;
   let predict_past = req.query.predict_past || undefined;
 
@@ -312,7 +313,12 @@ router.get('/country/:code/data', async (req, res) => {
       let reduced = Object.assign({}, ...Object.values(reduceResponse(listAsMapByKey(indData))));
       data[country]['indicators'][indicator.id] = reduced;
       if (predict) {
-        data[country]['predict'][indicator.id] = predict_data(reduced, predict, linearRegressionPredict)
+        if (compress && indicator.frequency != Frequency.Yearly) {
+          let predicted = predict_data(reduced, predict, linearRegressionPredict);
+          data[country]['predict'][indicator.id] = compressToYearly(predicted);
+        } else {
+          data[country]['predict'][indicator.id] = predict_data(reduced, predict, linearRegressionPredict)
+        }
       }
       if (predict_past) {
         data[country]['predict_past'][indicator.id] = predict_data(reduced, predict_past, linearRegressionPredictPast)
