@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import IndicatorForm from './components/IndicatorForm';
 import Map from './components/Map';
+import MapLegend from './components/MapLegend';
 
 const App = () => {
   const [dateBeg, setDateBeg] = useState('2022');
@@ -24,14 +25,22 @@ const App = () => {
 
   return (
     <div>
-      <IndicatorForm 
-        dateBeg={dateBeg} 
-        dateEnd={dateEnd} 
-        indicator={indicator} 
-        setDateBeg={setDateBeg} 
-        setDateEnd={setDateEnd} 
-        setIndicator={setIndicator} 
-      />
+      <div id="topbar">
+        <IndicatorForm 
+          id="indicatorform"
+          dateBeg={dateBeg} 
+          dateEnd={dateEnd} 
+          indicator={indicator} 
+          setDateBeg={setDateBeg} 
+          setDateEnd={setDateEnd} 
+          setIndicator={setIndicator} 
+        />
+        <MapLegend
+          id="maplegend"
+          stops={[0, 100000000000, 500000000000]}
+          colors={["red", "white", "green"]}
+        />
+      </div>
       <Map 
         dateBeg={dateBeg}
         dateEnd={dateEnd} 

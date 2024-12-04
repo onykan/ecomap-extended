@@ -487,7 +487,34 @@ function aapcFormator(innerObj, yearBegin, yearEnd) {
 
   for (let i = begin + 1; i <= end; i++) {
     sum += (innerObj[i] - innerObj[i - 1]) / innerObj[i] * 100;
-    //console.log(i + " value: " + innerObj[i] + " sum: " + sum);
+  }
+
+  return sum / (end - begin);
+}
+
+// Formator function for calculating (unweighted) average annual change
+function aacFormator(innerObj, yearBegin, yearEnd) {
+  const begin = Number.parseInt(yearBegin);
+  const end = Number.parseInt(yearEnd);
+  if (begin === end) return 0;
+  let sum = 0;
+
+  for (let i = begin + 1; i <= end; i++) {
+    sum += (innerObj[i] - innerObj[i - 1]);
+  }
+
+  return sum / (end - begin);
+}
+
+// Formator function for calculating average over range
+function avgOverRangeFormator(innerObj, yearBegin, yearEnd) {
+  const begin = Number.parseInt(yearBegin);
+  const end = Number.parseInt(yearEnd);
+  if (begin === end) return 0;
+  let sum = 0;
+
+  for (let i = begin; i <= end; i++) {
+    sum += innerObj[i];
   }
 
   return sum / (end - begin);
