@@ -18,8 +18,10 @@ ChartJS.register(
 
 const CountryPanel = ({ country, isOpen, onClose }) => {
   const predictRef = useRef(null);
+  const predictDataLenRef = useRef(null);
   const chartRef = useRef(null);
   const [predictYears, setPredict] = useState(0);
+  const [predictDataLen, setPredictDataLen] = useState(0);
   const [predictData, setPredictData] = useState({ labels: [], datasets: [] });
   const [countryData, setCountryData] = useState([]);
   const [chartData, setChartData] = useState({
@@ -71,8 +73,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
         setLoading(false);
       }
     }
-  }
-    , [country, isOpen]);
+  }, [country, isOpen]);
 
   const options = {
     responsive: true,
@@ -106,70 +107,114 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
   const handlePredictSubmit = async (event) => {
     event.preventDefault();
-    let pYears = predictRef.current.value;
-    setPredict(pYears);
-
     try {
-      axios.get(`/api/country/${country.code}/data?predict=${pYears}&compress=y`)
-        .then((response) => {
-          const predict = response.data[country.code].predict;
-          const indData = response.data[country.code].indicators;
+      axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
+        predict: predictYears,
+        predict_data_len: predictDataLen,
+        compress: "y",
+      })).then((response) => {
+        const predict = response.data[country.code].predict;
+        const indData = response.data[country.code].indicators;
 
-          const labelsData = Object.keys(indData.GDP).map(e => Number(e));
-          const datasetsData = Object.keys(indData).map((key) => {
-            return {
-              label: key,
-              data: Object.values(indData[key]),
-              borderColor: 'rgba(75,192,192,1)'
-            }
-          });
-
-          if (pYears <= 0) {
-            setChartData({
-              labels: labelsData,
-              datasets: datasetsData,
-            })
-            return;
+        const labelsData = Object.keys(indData.GDP).map(e => Number(e));
+        const datasetsData = Object.keys(indData).map((key) => {
+          return {
+            label: key,
+            data: Object.values(indData[key]),
+            borderColor: 'rgba(75,192,192,1)'
           }
-
-          let lastYear = Math.max(...labelsData);
-          let labels = [];
-          for (let i = 1; i <= pYears; i++) {
-            labels.push(lastYear + i);
-          }
-          const datasets = Object.keys(predict).map((key) => {
-            let dataset = {
-              label: key,
-              data: [],
-              segment: {}
-            };
-            dataset.data.push({ x: lastYear, y: indData[key][lastYear] });
-            Object.entries(predict[key]).forEach(([k, val]) => {
-              dataset.data.push({ x: Number(k), y: val });
-              dataset.borderColor = 'rgba(255,0,0,1)';
-            })
-            return dataset;
-          }
-          );
-          setPredictData({
-            labels: labels,
-            datasets: datasets,
-          })
-          const updatedLabels = [...labelsData];
-          const updatedDatasets = [...datasetsData];
-          labels.forEach(e => { updatedLabels.push(e) });
-          datasets.forEach(e => { updatedDatasets.push(e) });
-
-          setChartData({ labels: Array.from(new Set(updatedLabels.map(Number))).sort((a, b) => a - b), datasets: updatedDatasets });
-
-          console.log("chart data", chartData);
-
         });
+
+        if (predictYears <= 0) {
+          setChartData({
+            labels: labelsData,
+            datasets: datasetsData,
+          })
+          return;
+        }
+
+        let lastYear = Math.max(...labelsData);
+        let labels = [];
+        for (let i = 1; i <= predictYears; i++) {
+          labels.push(lastYear + i);
+        }
+        const datasets = Object.keys(predict).map((key) => {
+          let dataset = {
+            label: key,
+            data: [],
+            borderColor: 'rgba(255,0,0,1)'
+          };
+          dataset.data.push({ x: lastYear, y: indData[key][lastYear] });
+          Object.entries(predict[key]).forEach(([k, val]) => {
+            dataset.data.push({ x: Number(k), y: val });
+          })
+          return dataset;
+        }
+        );
+        setPredictData({
+          labels: labels,
+          datasets: datasets,
+        })
+        let updatedLabels = [...labelsData];
+        let updatedDatasets = [...datasetsData];
+        labels.forEach(e => { updatedLabels.push(e) });
+        datasets.forEach(e => { updatedDatasets.push(e) });
+
+        setChartData({ labels: Array.from(new Set(updatedLabels.map(Number))).sort((a, b) => a - b), datasets: updatedDatasets });
+      });
     } catch (error) {
       console.error("Error fetching predict data:", error);
     }
-
   };
+
+  let styles = {
+    form: {
+      backgroundColor: "white",
+      padding: "10px",
+      maxWidth: "250px",
+      borderRadius: "8px",
+    },
+
+    formGroup: {
+      display: "flex",
+      alignItems: "center",
+      marginBottom: "5px",
+    },
+
+    label: {
+      width: "100px",
+      fontSize: "16px",
+      color: "#333",
+    },
+
+    input: {
+      width: "40px",
+      marginLeft: "auto",
+      padding: "5px",
+      border: "1px solid #ccc",
+      borderRadius: "4px",
+      fontSize: "12px",
+    },
+
+    button: {
+      backgroundColor: "#f8f9fa",
+      border: "1px solid #f8f9fa",
+      borderRadius: "4px",
+      color: "#3c4043",
+      cursor: "pointer",
+      fontFamily: "arial",
+      fontSize: "14px",
+      lineHeight: "27px",
+      padding: "0 15px",
+      textAlign: "center",
+      styleHover: {
+        borderColor: "#dadce0",
+        boxShadow: "rgba(0, 0, 0, .1) 0 1px 1px",
+        color: "#202124",
+      }
+    },
+  };
+
 
   return (
     <div
@@ -193,28 +238,42 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           <h2>Country: {country.code}</h2>
           <p>Indicator Value: {country.value}</p>
 
-          <form onSubmit={handlePredictSubmit}>
-            <label>
-              Predict:
+          <form onSubmit={handlePredictSubmit} style={styles.form}>
+            <div style={styles.formGroup}>
+              <label for="data_len">Prediction data length:</label>
               <input
+                style={styles.input}
+                type="number"
+                name="predict_data_len"
+                min={0}
+                max={100}
+                ref={predictDataLenRef}
+                defaultValue={predictDataLen}
+                onChange={() => setPredictDataLen(predictDataLenRef.current.value)}
+              />
+            </div>
+            <div style={styles.formGroup}>
+              <label for="predict_years">Predicted years:</label>
+              <input
+                style={styles.input}
                 type="number"
                 name="predict"
                 min={0}
                 max={20}
                 ref={predictRef}
                 defaultValue={predictYears}
-                onChage={() => setPredict(predictRef.current.value)}
+                onChange={() => setPredict(predictRef.current.value)}
               />
-            </label>
-            <input type="submit" value="Submit" />
+            </div>
+            <input type="submit" value="Predict" style={styles.button} />
           </form>
 
           <Line ref={chartRef} data={chartData} options={options} />
 
-
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 };
 

@@ -274,7 +274,8 @@ router.get('/country/:code/data', async (req, res) => {
   let dateBeg = req.query.dateBeg || undefined;
   let dateEnd = req.query.dateEnd || undefined;
   let mrv = req.query.mrv || undefined;
-  let compress = req.query.compress || undefined;
+  let compress = req.query.compress || undefined; // Compress to yearly
+  let predict_data_len = req.query.predict_data_len || undefined;
   let predict = req.query.predict || undefined;
   let predict_past = req.query.predict_past || undefined;
 
@@ -309,20 +310,27 @@ router.get('/country/:code/data', async (req, res) => {
         }
       }
       let indData = await getByIndicator(country, indicator.code, ...req_params);
-      // TODO: can probably be optimized more
       let reduced = Object.assign({}, ...Object.values(reduceResponse(listAsMapByKey(indData))));
+      reduced = Object.keys(reduced).sort().reduce(
+        (obj, key) => {
+          obj[key] = reduced[key];
+          return obj;
+        },
+        {});
       data[country]['indicators'][indicator.id] = reduced;
       if (predict) {
+        let prediction_data = (predict_data_len && predict_data_len > 1 && predict_data_len <= Object.keys(reduced).length) ? Object.fromEntries(Object.entries(reduced).slice(-predict_data_len)) : reduced;
         if (compress && indicator.frequency != Frequency.Yearly) {
-          let predicted = predict_data(reduced, predict, linearRegressionPredict);
+          let predicted = predict_data(prediction_data, predict, linearRegressionPredict);
           let compressed = compressToYearly(predicted);
           data[country]['predict'][indicator.id] = Object.fromEntries(Object.entries(compressed).slice(0, predict))
         } else {
-          data[country]['predict'][indicator.id] = predict_data(reduced, predict, linearRegressionPredict)
+          data[country]['predict'][indicator.id] = predict_data(prediction_data, predict, linearRegressionPredict)
         }
       }
       if (predict_past) {
-        data[country]['predict_past'][indicator.id] = predict_data(reduced, predict_past, linearRegressionPredictPast)
+        let prediction_data = (predict_data_len && predict_data_len > 1 && predict_data_len <= Object.keys(reduced).length) ? Object.fromEntries(Object.entries(reduced).slice(predict_data_len)) : reduced;
+        data[country]['predict_past'][indicator.id] = predict_data(prediction_data, predict_past, linearRegressionPredictPast)
       }
     }
   }));
