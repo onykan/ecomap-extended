@@ -1,4 +1,4 @@
-const { predict_data, linearRegressionPredict, linearRegressionPredictPast } = require("../utils/predict.js");
+const { predict_data, linearRegressionPredict, linearRegressionPredictPast, get_regressor, r2_score, linearRegressionFit } = require("../utils/predict.js");
 const { isNumeric, compressToYearly } = require("../utils/utils.js");
 
 const router = require('express').Router();
@@ -278,6 +278,7 @@ router.get('/country/:code/data', async (req, res) => {
   let predict_data_len = req.query.predict_data_len || undefined;
   let predict = req.query.predict || undefined;
   let predict_past = req.query.predict_past || undefined;
+  let fit = req.query.fit || undefined;
 
   if (!dateBeg || !dateEnd) {
     mrv = mrv ? mrv : 200;
@@ -296,6 +297,9 @@ router.get('/country/:code/data', async (req, res) => {
   }
   if (predict_past) {
     data[country]['predict_past'] = {};
+  }
+  if (fit) {
+    data[country]['fit'] = {};
   }
 
   await Promise.all(indicators.map(async (indicator) => {
@@ -331,6 +335,25 @@ router.get('/country/:code/data', async (req, res) => {
       if (predict_past) {
         let prediction_data = (predict_data_len && predict_data_len > 1 && predict_data_len <= Object.keys(reduced).length) ? Object.fromEntries(Object.entries(reduced).slice(predict_data_len)) : reduced;
         data[country]['predict_past'][indicator.id] = predict_data(prediction_data, predict_past, linearRegressionPredictPast)
+      }
+      if (fit) {
+        data[country]['fit'][indicator.id] = {
+          x: [],
+          y: [],
+          y_hat: [],
+          r2: 0.0
+        };
+        let fit_data = (indicator.frequency != Frequency.Yearly)
+          ? compressToYearly(reduced)
+          : reduced;
+        let x_values = Object.keys(fit_data).map(Number);
+        let y_values = Object.values(fit_data);
+        let regressor = get_regressor(x_values, y_values);
+        data[country]['fit'][indicator.id].x = x_values;
+        data[country]['fit'][indicator.id].y = y_values;
+        let y_hat = linearRegressionFit(x_values, regressor);
+        data[country]['fit'][indicator.id].r2 = r2_score(y_values, y_hat);
+        data[country]['fit'][indicator.id].y_hat = y_hat;
       }
     }
   }));
