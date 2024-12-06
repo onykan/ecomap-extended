@@ -113,9 +113,13 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
   const handlePredictSubmit = async (event) => {
     event.preventDefault();
+    fetchPredict();
+  };
+
+  const fetchPredict = async (years = predictYears) => {
     try {
       axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
-        predict: predictYears,
+        predict: years,
         predict_data_len: predictDataLen,
         compress: "y",
       })).then((response) => {
@@ -131,7 +135,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           }
         });
 
-        if (predictYears <= 0) {
+        if (years <= 0) {
           setChartData({
             labels: labelsData,
             datasets: datasetsData,
@@ -141,7 +145,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
         let lastYear = Math.max(...labelsData);
         let labels = [];
-        for (let i = 1; i <= predictYears; i++) {
+        for (let i = 1; i <= years; i++) {
           labels.push(lastYear + i);
         }
         const datasets = Object.keys(predict).map((key) => {
@@ -171,10 +175,9 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
     } catch (error) {
       console.error("Error fetching predict data:", error);
     }
-  };
+  }
 
   const linearRegFit = async () => {
-    // event.preventDefault();
     try {
       axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
         fit: "y",
@@ -288,7 +291,10 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           <div style={styles.predictFormDiv}>
             <form>
               <label class="radio-inline">
-                <input type="radio" name="predictRadio" onChange={() => setPredictFormState(PredictFormState.predict)}
+                <input type="radio" name="predictRadio" onChange={() => {
+                  setPredictFormState(PredictFormState.predict);
+                  fetchPredict(-1);
+                }}
                   checked={predictFormState === PredictFormState.predict} />Predict
               </label>
               <label class="radio-inline">
