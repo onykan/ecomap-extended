@@ -16,6 +16,8 @@ ChartJS.register(
   zoomPlugin
 );
 
+const INDICATOR_COUNT = 7;
+
 const PredictFormState = {
   predict: 'predict',
   fit: 'fit',
@@ -27,6 +29,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
   const predictRef = useRef(null);
   const predictDataLenRef = useRef(null);
   const chartRef = useRef(null);
+  const [r2_scores, setR2Scores] = useState([]);
   const [predictYears, setPredict] = useState(0);
   const [predictDataLen, setPredictDataLen] = useState(0);
   const [predictData, setPredictData] = useState({ labels: [], datasets: [] });
@@ -185,8 +188,10 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
         const fit_data = response.data[country.code].fit
         const indData = response.data[country.code].indicators;
 
+
+        let r2Scores = [];
         const labels = Object.keys(indData.GDP).map(e => Number(e));
-        const datasets = [];
+        let datasets = [];
         Object.keys(indData).forEach((key) => {
           datasets.push({
             label: key,
@@ -200,8 +205,10 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             data: fit_data[key].y_hat,
             borderColor: 'rgba(255,0,0,1)'
           });
+          r2Scores.push([key, fit_data[key].r2]);
         });
 
+        setR2Scores(r2Scores);
         setChartData({ labels: labels, datasets: datasets });
       });
     } catch (error) {
@@ -338,6 +345,28 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
                 </div>
                 <input type="submit" value="Predict" style={styles.button} />
               </form>
+            )}
+            {predictFormState === PredictFormState.fit && (
+              <div>
+                <b>R² scores:</b>
+                {
+                  Array.from({ length: r2_scores.length }).map((_, i) => (
+                    <div key={i}>
+                      <span style={{ display: 'inline-block', width: '100px' }}>{r2_scores[i][0]}: </span>
+                      <span>{Number(r2_scores[i][1]).toFixed(2)}</span>
+                    </div>
+                  ))
+                }
+              </div>
+            )}
+            {predictFormState === PredictFormState.info && (
+              <div >
+                <h4 style={{ marginBottom: "1px", marginTop: "2px" }}>Predict:</h4>
+                <p style={{ marginBottom: "1px", marginTop: "2px" }}>Data length determines the number of years to consider when making the prediction.</p>
+                <p style={{ marginBottom: "1px", marginTop: "2px" }}>Predicted years defines the amount of years to predict.</p>
+                <h4 style={{ marginBottom: "1px", marginTop: "2px" }}>Fit:</h4>
+                <p style={{ marginBottom: "1px", marginTop: "2px" }}>Contains the R² scores of the fitted lines on the data.</p>
+              </div>
             )}
           </div>
 
