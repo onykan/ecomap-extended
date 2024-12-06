@@ -16,7 +16,14 @@ ChartJS.register(
   zoomPlugin
 );
 
+const PredictFormState = {
+  predict: 'predict',
+  fit: 'fit',
+  info: 'info'
+}
+
 const CountryPanel = ({ country, isOpen, onClose }) => {
+  const [predictFormState, setPredictFormState] = useState(PredictFormState.predict);
   const predictRef = useRef(null);
   const predictDataLenRef = useRef(null);
   const chartRef = useRef(null);
@@ -50,7 +57,6 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             console.log("data", cData);
             const labels = Object.keys(cData.GDP);
             console.log("labels", labels);
-            let i = 0;
             const datasets = Object.keys(cData).map((key) => {
               return {
                 label: key,
@@ -167,7 +173,48 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
     }
   };
 
+  const linearRegFit = async () => {
+    // event.preventDefault();
+    try {
+      axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
+        fit: "y",
+      })).then((response) => {
+        const fit_data = response.data[country.code].fit
+        const indData = response.data[country.code].indicators;
+
+        const labels = Object.keys(indData.GDP).map(e => Number(e));
+        const datasets = [];
+        Object.keys(indData).forEach((key) => {
+          datasets.push({
+            label: key,
+            data: Object.values(indData[key]),
+            borderColor: 'rgba(75,192,192,1)'
+          });
+        });
+        Object.keys(fit_data).forEach((key) => {
+          datasets.push({
+            label: key,
+            data: fit_data[key].y_hat,
+            borderColor: 'rgba(255,0,0,1)'
+          });
+        });
+
+        setChartData({ labels: labels, datasets: datasets });
+      });
+    } catch (error) {
+      console.error("Error fetching predict data:", error);
+    }
+  };
+
+  // TODO: maybe to css file
   let styles = {
+    predictFormDiv: {
+      backgroundColor: "white",
+      padding: "10px",
+      maxWidth: "250px",
+      borderRadius: "8px",
+    },
+
     form: {
       backgroundColor: "white",
       padding: "10px",
@@ -238,35 +285,55 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           <h2>Country: {country.code}</h2>
           <p>Indicator Value: {country.value}</p>
 
-          <form onSubmit={handlePredictSubmit} style={styles.form}>
-            <div style={styles.formGroup}>
-              <label for="data_len">Prediction data length:</label>
-              <input
-                style={styles.input}
-                type="number"
-                name="predict_data_len"
-                min={0}
-                max={100}
-                ref={predictDataLenRef}
-                defaultValue={predictDataLen}
-                onChange={() => setPredictDataLen(predictDataLenRef.current.value)}
-              />
-            </div>
-            <div style={styles.formGroup}>
-              <label for="predict_years">Predicted years:</label>
-              <input
-                style={styles.input}
-                type="number"
-                name="predict"
-                min={0}
-                max={20}
-                ref={predictRef}
-                defaultValue={predictYears}
-                onChange={() => setPredict(predictRef.current.value)}
-              />
-            </div>
-            <input type="submit" value="Predict" style={styles.button} />
-          </form>
+          <div style={styles.predictFormDiv}>
+            <form>
+              <label class="radio-inline">
+                <input type="radio" name="predictRadio" onChange={() => setPredictFormState(PredictFormState.predict)}
+                  checked={predictFormState === PredictFormState.predict} />Predict
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="predictRadio" onChange={() => {
+                  setPredictFormState(PredictFormState.fit);
+                  linearRegFit();
+                }} checked={predictFormState === PredictFormState.fit} />Fit
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="predictRadio" onChange={() => setPredictFormState(PredictFormState.info)}
+                  checked={predictFormState === PredictFormState.info} />Info
+              </label>
+            </form>
+            {predictFormState === PredictFormState.predict && (
+              <form onSubmit={handlePredictSubmit} style={styles.form}>
+                <div style={styles.formGroup}>
+                  <label for="data_len">Prediction data length:</label>
+                  <input
+                    style={styles.input}
+                    type="number"
+                    name="predict_data_len"
+                    min={0}
+                    max={100}
+                    ref={predictDataLenRef}
+                    defaultValue={predictDataLen}
+                    onChange={() => setPredictDataLen(predictDataLenRef.current.value)}
+                  />
+                </div>
+                <div style={styles.formGroup}>
+                  <label for="predict_years">Predicted years:</label>
+                  <input
+                    style={styles.input}
+                    type="number"
+                    name="predict"
+                    min={0}
+                    max={20}
+                    ref={predictRef}
+                    defaultValue={predictYears}
+                    onChange={() => setPredict(predictRef.current.value)}
+                  />
+                </div>
+                <input type="submit" value="Predict" style={styles.button} />
+              </form>
+            )}
+          </div>
 
           <Line ref={chartRef} data={chartData} options={options} />
 
