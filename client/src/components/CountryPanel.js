@@ -18,14 +18,15 @@ ChartJS.register(
 
 const INDICATOR_COUNT = 7;
 
-const PredictFormState = {
+const panelState = {
+  normal: 'normal',
   predict: 'predict',
   fit: 'fit',
   info: 'info'
 }
 
 const CountryPanel = ({ country, isOpen, onClose }) => {
-  const [predictFormState, setPredictFormState] = useState(PredictFormState.predict);
+  const [predictFormState, setPredictFormState] = useState(panelState.normal);
   const predictRef = useRef(null);
   const predictDataLenRef = useRef(null);
   const chartRef = useRef(null);
@@ -42,7 +43,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
       {
         label: 'Loading...',
         data: [0, 0, 0],
-        borderColor: 'rgba(75,192,192,1)',
+        borderColor: 'rgba(0,0,0,1)',
       }
     ]
   });
@@ -50,50 +51,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
   useEffect(() => {
     if (country && isOpen) {
-      chartRef.current.resetZoom();
-      try {
-        // Fix for Djibouti
-        if (country.code === "-99") {
-          country.code = "DJI";
-        }
-        // Fix for Antarctica
-        if (country.code === "ATA" || country.code === "ESH" || country.code === "GUF") {
-          return
-        }
-        axios.get(`/api/country/${country.code}/data`)
-          .then((response) => {
-            const data = response.data[country.code].info;
-            setCountryData(data);
-            const cData = response.data[country.code].indicators
-            console.log("data", cData);
-            const labels = Object.keys(cData.GDP);
-            console.log("labels", labels);
-
-            // Filter out datasets with all null values
-            const datasets = Object.keys(cData).filter((key) => {
-              return Object.values(cData[key]).some(value => value !== null);
-            }).map((key) => {
-              return {
-                label: key,
-                data: Object.values(cData[key]),
-                borderColor: 'rgba(0,0,0,1)',
-                usePointStyle: true,
-                pointRadius: 0,
-                hidden: true,
-                hitRadius: 10,
-                scale: 'y',
-              };
-            });
-            console.log("datasets", datasets);
-            setChartData({
-              labels: labels,
-              datasets: datasets,
-            })
-          }
-          );
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
+      fetchCountryData();
     }
   }, [country, isOpen]);
 
@@ -102,7 +60,59 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
     fetchPredict();
   };
 
-  const fetchPredict = async (years = predictYears) => {
+  const fetchCountryData = () => {
+    chartRef.current.resetZoom();
+    try {
+      // Fix for Djibouti
+      if (country.code === "-99") {
+        country.code = "DJI";
+      }
+      // Fix for Antarctica
+      if (country.code === "ATA" || country.code === "ESH" || country.code === "GUF") {
+        return
+      }
+      axios.get(`/api/country/${country.code}/data?compress=y`)
+        .then((response) => {
+          const data = response.data[country.code].info;
+          setCountryData(data);
+          const cData = response.data[country.code].indicators
+          console.log("data", cData);
+          let labels = Object.keys(cData.GDP).map(Number);
+          const max_year = Math.max(...labels);
+          labels.push(max_year + 1);
+          console.log("labels", labels);
+
+          // Filter out datasets with all null values
+          const datasets = Object.keys(cData).filter((key) => {
+            return Object.values(cData[key]).some(value => value !== null);
+          }).map((key) => {
+            const dataset = {
+              label: key,
+              data: Object.entries(cData[key])
+                .filter(([k, val]) => Number(k) <= max_year)
+                .map(([k, val]) => ({ x: Number(k), y: val })),
+              borderColor: 'rgba(0,0,0,1)',
+              usePointStyle: true,
+              pointRadius: 0,
+              hidden: true,
+              hitRadius: 10,
+              scale: 'y',
+            };
+            return dataset;
+          });
+          console.log("datasets", datasets);
+          setChartData({
+            labels: labels,
+            datasets: datasets,
+          })
+        }
+        );
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  const fetchPredict = (years = predictYears) => {
     try {
       axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
         predict: years,
@@ -113,17 +123,21 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
         const indData = response.data[country.code].indicators;
 
         const labelsData = Object.keys(indData.GDP).map(e => Number(e));
+        const max_year = Math.max(...labelsData) + 1;
+        labelsData.push(max_year);
         const datasetsData = Object.keys(indData).map((key) => {
-          return {
+          const dataset = {
             label: key,
-            data: Object.values(indData[key]),
-            borderColor: 'rgba(75,192,192,1)',
+            data: Object.entries(indData[key])
+              .map(([k, val]) => ({ x: Number(k), y: val })),
+            borderColor: 'rgba(0,0,0,1)',
             usePointStyle: true,
             pointRadius: 0,
             hidden: true,
             hitRadius: 10,
             scale: 'y',
-          }
+          };
+          return dataset;
         });
 
         if (years <= 0) {
@@ -134,10 +148,9 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           return;
         }
 
-        let lastYear = Math.max(...labelsData);
         let labels = [];
         for (let i = 1; i <= years; i++) {
-          labels.push(lastYear + i);
+          labels.push(max_year + i);
         }
         const datasets = Object.keys(predict).map((key) => {
           let dataset = {
@@ -150,7 +163,9 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             hitRadius: 10,
             scale: 'y',
           };
-          dataset.data.push({ x: lastYear, y: indData[key][lastYear] });
+
+          const maxYearForInd = Math.max(...Object.keys(indData[key]).map(Number));
+          dataset.data.push({ x: maxYearForInd, y: indData[key][maxYearForInd] });
           Object.entries(predict[key]).forEach(([k, val]) => {
             dataset.data.push({ x: Number(k), y: val });
           })
@@ -189,7 +204,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           datasets.push({
             label: key,
             data: Object.values(indData[key]),
-            borderColor: 'rgba(75,192,192,1)',
+            borderColor: 'rgba(0,0,0,1)',
             usePointStyle: true,
             pointRadius: 0,
             hidden: true,
@@ -441,23 +456,35 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             <form>
               <label class="radio-inline">
                 <input type="radio" name="predictRadio" onChange={() => {
-                  setPredictFormState(PredictFormState.predict);
-                  fetchPredict(-1);
+                  setPredictFormState(panelState.normal);
+                  fetchCountryData();
                 }}
-                  checked={predictFormState === PredictFormState.predict} />Predict
+                  checked={predictFormState === panelState.normal} />Normal
               </label>
               <label class="radio-inline">
                 <input type="radio" name="predictRadio" onChange={() => {
-                  setPredictFormState(PredictFormState.fit);
-                  linearRegFit();
-                }} checked={predictFormState === PredictFormState.fit} />Fit
+                  setPredictFormState(panelState.predict);
+                  fetchPredict(-1);
+                }}
+                  checked={predictFormState === panelState.predict} />Predict
               </label>
               <label class="radio-inline">
-                <input type="radio" name="predictRadio" onChange={() => setPredictFormState(PredictFormState.info)}
-                  checked={predictFormState === PredictFormState.info} />Info
+                <input type="radio" name="predictRadio" onChange={() => {
+                  setPredictFormState(panelState.fit);
+                  linearRegFit();
+                }} checked={predictFormState === panelState.fit} />Fit
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="predictRadio" onChange={() => {
+                  setPredictFormState(panelState.info)
+                }}
+                  checked={predictFormState === panelState.info} />Info
               </label>
             </form>
-            {predictFormState === PredictFormState.predict && (
+            {predictFormState === panelState.predict && (
+              <div></div>
+            )}
+            {predictFormState === panelState.predict && (
               <form onSubmit={handlePredictSubmit} style={styles.form}>
                 <div style={styles.formGroup}>
                   <label for="data_len">Prediction data length:</label>
@@ -488,7 +515,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
                 <input type="submit" value="Predict" style={styles.button} />
               </form>
             )}
-            {predictFormState === PredictFormState.fit && (
+            {predictFormState === panelState.fit && (
               <div>
                 <b>R² scores:</b>
                 {
@@ -501,7 +528,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
                 }
               </div>
             )}
-            {predictFormState === PredictFormState.info && (
+            {predictFormState === panelState.info && (
               <div>
                 <h4 style={{ marginBottom: "1px", marginTop: "2px" }}>Predict:</h4>
                 <p style={{ marginBottom: "1px", marginTop: "2px" }}>Data length determines the number of years to consider when making the prediction.</p>

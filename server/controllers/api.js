@@ -321,16 +321,13 @@ router.get('/country/:code/data', async (req, res) => {
           return obj;
         },
         {});
+      if (compress && indicator.frequency != Frequency.Yearly) {
+        reduced = compressToYearly(reduced);
+      }
       data[country]['indicators'][indicator.id] = reduced;
       if (predict) {
         let prediction_data = (predict_data_len && predict_data_len > 1 && predict_data_len <= Object.keys(reduced).length) ? Object.fromEntries(Object.entries(reduced).slice(-predict_data_len)) : reduced;
-        if (compress && indicator.frequency != Frequency.Yearly) {
-          let predicted = predict_data(prediction_data, predict, linearRegressionPredict);
-          let compressed = compressToYearly(predicted);
-          data[country]['predict'][indicator.id] = Object.fromEntries(Object.entries(compressed).slice(0, predict))
-        } else {
-          data[country]['predict'][indicator.id] = predict_data(prediction_data, predict, linearRegressionPredict)
-        }
+        data[country]['predict'][indicator.id] = predict_data(prediction_data, predict, linearRegressionPredict)
       }
       if (predict_past) {
         let prediction_data = (predict_data_len && predict_data_len > 1 && predict_data_len <= Object.keys(reduced).length) ? Object.fromEntries(Object.entries(reduced).slice(predict_data_len)) : reduced;
@@ -343,11 +340,8 @@ router.get('/country/:code/data', async (req, res) => {
           y_hat: [],
           r2: 0.0
         };
-        let fit_data = (indicator.frequency != Frequency.Yearly)
-          ? compressToYearly(reduced)
-          : reduced;
-        let x_values = Object.keys(fit_data).map(Number);
-        let y_values = Object.values(fit_data);
+        let x_values = Object.keys(reduced).map(Number);
+        let y_values = Object.values(reduced);
         let regressor = get_regressor(x_values, y_values);
         data[country]['fit'][indicator.id].x = x_values;
         data[country]['fit'][indicator.id].y = y_values;

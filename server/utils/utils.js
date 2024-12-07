@@ -8,7 +8,7 @@ function compressToYearly(data) {
   const result = {};
   const yearlyData = {};
   for (const [time, value] of Object.entries(data)) {
-    const year = time.slice(0, 4);
+    const year = Number(time.slice(0, 4));
     if (!yearlyData[year]) {
       yearlyData[year] = { sum: 0, count: 0 };
     }
