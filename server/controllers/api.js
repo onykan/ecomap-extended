@@ -1,5 +1,5 @@
-const { predict_data, linearRegressionPredict, linearRegressionPredictPast } = require("../utils/predict.js");
-const { isNumeric } = require("../utils/utils.js");
+const { predict_data, linearRegressionPredict, linearRegressionPredictPast, get_regressor, r2_score, linearRegressionFit } = require("../utils/predict.js");
+const { isNumeric, compressToYearly } = require("../utils/utils.js");
 
 const router = require('express').Router();
 
@@ -274,8 +274,11 @@ router.get('/country/:code/data', async (req, res) => {
   let dateBeg = req.query.dateBeg || undefined;
   let dateEnd = req.query.dateEnd || undefined;
   let mrv = req.query.mrv || undefined;
+  let compress = req.query.compress || undefined; // Compress to yearly
+  let predict_data_len = req.query.predict_data_len || undefined;
   let predict = req.query.predict || undefined;
   let predict_past = req.query.predict_past || undefined;
+  let fit = req.query.fit || undefined;
 
   if (!dateBeg || !dateEnd) {
     mrv = mrv ? mrv : 200;
@@ -295,6 +298,9 @@ router.get('/country/:code/data', async (req, res) => {
   if (predict_past) {
     data[country]['predict_past'] = {};
   }
+  if (fit) {
+    data[country]['fit'] = {};
+  }
 
   await Promise.all(indicators.map(async (indicator) => {
     if (!inds || inds.some((i) => i.toLowerCase() == indicator.id.toLowerCase())) {
@@ -308,14 +314,46 @@ router.get('/country/:code/data', async (req, res) => {
         }
       }
       let indData = await getByIndicator(country, indicator.code, ...req_params);
-      // TODO: can probably be optimized more
       let reduced = Object.assign({}, ...Object.values(reduceResponse(listAsMapByKey(indData))));
+      reduced = Object.keys(reduced).sort().reduce(
+        (obj, key) => {
+          obj[key] = reduced[key];
+          return obj;
+        },
+        {});
       data[country]['indicators'][indicator.id] = reduced;
       if (predict) {
-        data[country]['predict'][indicator.id] = predict_data(reduced, predict, linearRegressionPredict)
+        let prediction_data = (predict_data_len && predict_data_len > 1 && predict_data_len <= Object.keys(reduced).length) ? Object.fromEntries(Object.entries(reduced).slice(-predict_data_len)) : reduced;
+        if (compress && indicator.frequency != Frequency.Yearly) {
+          let predicted = predict_data(prediction_data, predict, linearRegressionPredict);
+          let compressed = compressToYearly(predicted);
+          data[country]['predict'][indicator.id] = Object.fromEntries(Object.entries(compressed).slice(0, predict))
+        } else {
+          data[country]['predict'][indicator.id] = predict_data(prediction_data, predict, linearRegressionPredict)
+        }
       }
       if (predict_past) {
-        data[country]['predict_past'][indicator.id] = predict_data(reduced, predict_past, linearRegressionPredictPast)
+        let prediction_data = (predict_data_len && predict_data_len > 1 && predict_data_len <= Object.keys(reduced).length) ? Object.fromEntries(Object.entries(reduced).slice(predict_data_len)) : reduced;
+        data[country]['predict_past'][indicator.id] = predict_data(prediction_data, predict_past, linearRegressionPredictPast)
+      }
+      if (fit) {
+        data[country]['fit'][indicator.id] = {
+          x: [],
+          y: [],
+          y_hat: [],
+          r2: 0.0
+        };
+        let fit_data = (indicator.frequency != Frequency.Yearly)
+          ? compressToYearly(reduced)
+          : reduced;
+        let x_values = Object.keys(fit_data).map(Number);
+        let y_values = Object.values(fit_data);
+        let regressor = get_regressor(x_values, y_values);
+        data[country]['fit'][indicator.id].x = x_values;
+        data[country]['fit'][indicator.id].y = y_values;
+        let y_hat = linearRegressionFit(x_values, regressor);
+        data[country]['fit'][indicator.id].r2 = r2_score(y_values, y_hat);
+        data[country]['fit'][indicator.id].y_hat = y_hat;
       }
     }
   }));

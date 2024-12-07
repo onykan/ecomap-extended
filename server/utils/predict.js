@@ -133,7 +133,7 @@ function linearRegressionFit(x_values, regressor) {
 // Calculates R squared prediction error for linear regression fit
 function r2_score(y_values, predictions) {
   let rss = 0, tss = 0;
-  let y_mean = y_values.reduce((a, b) => a + b) / y_values.length;
+  let y_mean = y_values.reduce((a, b) => a + b, 0) / y_values.length;
   for (i = 0; i < y_values.length; i++) {
     rss += (predictions[i] - y_values[i]) ** 2;
     tss += (predictions[i] - y_mean) ** 2;
