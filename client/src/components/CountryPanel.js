@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import zoomPlugin from "chartjs-plugin-zoom";
 import { CategoryScale, Chart as ChartJS, LinearScale, LineElement, PointElement, Title, Tooltip, Legend, plugins } from 'chart.js';
+import '../styles/CountryPanel.css';
 
 ChartJS.register(
   CategoryScale,
@@ -236,15 +237,22 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
   // TODO: maybe to css file
   let styles = {
+
+    radioBlock: {
+      display: "flex",
+      width: "50%",
+    },
+
     predictFormDiv: {
-      backgroundColor: "white",
+      display: "flex",
+      flexDirection: "row",
       padding: "10px",
-      maxWidth: "250px",
+      width: "100%",
       borderRadius: "8px",
     },
 
     form: {
-      backgroundColor: "white",
+      display: "flex",
       padding: "10px",
       maxWidth: "250px",
       borderRadius: "8px",
@@ -259,7 +267,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
     label: {
       width: "100px",
       fontSize: "16px",
-      color: "#333",
+
     },
 
     input: {
@@ -271,23 +279,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
       fontSize: "12px",
     },
 
-    button: {
-      backgroundColor: "#f8f9fa",
-      border: "1px solid #f8f9fa",
-      borderRadius: "4px",
-      color: "#3c4043",
-      cursor: "pointer",
-      fontFamily: "arial",
-      fontSize: "14px",
-      lineHeight: "27px",
-      padding: "0 15px",
-      textAlign: "center",
-      styleHover: {
-        borderColor: "#dadce0",
-        boxShadow: "rgba(0, 0, 0, .1) 0 1px 1px",
-        color: "#202124",
-      }
-    },
+
   };
 
   ///These are the options for the chart
@@ -307,7 +299,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             return dataset.text;
           });
 
-          const indexes = datasets.reduce(function(ind, e, i) {
+          const indexes = datasets.reduce(function (ind, e, i) {
             if (e === legendItem.text)
               ind.push(i);
             return ind;
@@ -392,9 +384,8 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
       y: {
         title: {
           display: true,
-          text: function(context) {
+          text: function (context) {
             ///determines dataset y axis label
-            console.log("context", context.chart.data.datasets);
             const datasets = context.chart.data.datasets;
             const chart = context.chart;
             let datasetLabel = '';
@@ -438,10 +429,10 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
         right: 0,
         top: 0,
         height: "100vh",
-        width: isOpen ? "600px" : "0px",
+        width: isOpen ? "40%" : "0px",
         overflow: "hidden",
-        backgroundColor: "#f4f4f4",
-        boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)",
+        backgroundColor: "#B9D9EB",
+        color: "black",
         transition: "width 0.3s ease",
         padding: isOpen ? "20px" : "0px",
       }} >
@@ -453,7 +444,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           <p>Indicator Value: {country.value}</p>
 
           <div style={styles.predictFormDiv}>
-            <form>
+            <form style={styles.radioBlock}>
               <label class="radio-inline">
                 <input type="radio" name="predictRadio" onChange={() => {
                   setPredictFormState(panelState.normal);
@@ -538,7 +529,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
               </div>
             )}
           </div>
-          <Line ref={chartRef} data={chartData} options={options} />
+          <Line style={{ color: 'lightblue' }} ref={chartRef} data={chartData} options={options} />
         </div>
       )}
     </div >

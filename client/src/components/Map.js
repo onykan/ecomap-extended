@@ -4,11 +4,12 @@ import axios from 'axios';
 import { scaleLinear } from "d3-scale";
 import CountryPanel from "./CountryPanel";
 import { Tooltip } from 'react-tooltip';
+import '../styles/Map.css';
 
 const geoUrl =
   "https://raw.githubusercontent.com/lotusms/world-map-data/main/world.json";
 
-const Map = ({dateBeg, dateEnd, indicator, countryNames}) => {
+const Map = ({ dateBeg, dateEnd, indicator, countryNames }) => {
   const [data, setData] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -19,7 +20,7 @@ const Map = ({dateBeg, dateEnd, indicator, countryNames}) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const url = dateBeg === dateEnd 
+        const url = dateBeg === dateEnd
           ? `/api/datalayer/${indicator}?dateBeg=${dateBeg}&dateEnd=${dateEnd}`
           : `/api/datalayer/${indicator}aapc?dateBeg=${dateBeg}&dateEnd=${dateEnd}`;
         const result = await axios.get(url);
@@ -32,10 +33,10 @@ const Map = ({dateBeg, dateEnd, indicator, countryNames}) => {
     fetchData();
     setYearIsSame(dateBeg === dateEnd);
   }, [dateBeg, dateEnd, indicator]);
-   
+
   // Define color scales for each indicator
   const colorScales = {
-    gdp: scaleLinear().domain([-8,0,8]).range(["red", "white", "green"]),
+    gdp: scaleLinear().domain([-8, 0, 8]).range(["red", "white", "green"]),
     ur: scaleLinear().domain([10, 0, -2]).range(["red", "white", "green"]).clamp(true),
     cpi: scaleLinear().domain([-2, 0, 2, 4, 7]).range(["red", "white", "green", "white", "red"]),
     //if (yearIsSame) we need to use different color scale
@@ -53,7 +54,7 @@ const Map = ({dateBeg, dateEnd, indicator, countryNames}) => {
     if (value === null) return "#EEE";
     if (yearIsSame) {
       // Different coloring logic when year is the same
-      return colorScales[indicator+"C"](value);
+      return colorScales[indicator + "C"](value);
     } else {
       // Existing coloring logic when years are different
       return colorScales[indicator](value);
@@ -86,11 +87,22 @@ const Map = ({dateBeg, dateEnd, indicator, countryNames}) => {
   };
 
   return (
-    <>
+    <div
+      style={{
+        position: "relative",
+        height: "30%",
+        overflow: "hidden",
+        width: isPanelOpen ? "58%" : "100%",
+        transition: "width 0.3s ease",
+
+      }
+      }
+    >
       <ComposableMap data-tooltip-id="tip"
-                     data-tooltip-html={tooltipContent}>
-        <Sphere stroke="#EAEAEC" fill="#1a1a1a"/>
-        <Graticule stroke="white" strokeWidth={0.3}/>
+        data-tooltip-html={tooltipContent}
+      >
+        <Sphere stroke="#EAEAEC" fill="#1a1a1a" />
+        <Graticule stroke="white" strokeWidth={0.3} />
         <Geographies geography={geoUrl}>
           {({ geographies }) =>
             geographies.map((geo) => {
@@ -104,22 +116,22 @@ const Map = ({dateBeg, dateEnd, indicator, countryNames}) => {
                   onMouseLeave={() => {
                     setTooltipContent("");
                   }}
-                  onClick={() => handleCountryClick(countryCode)}          
+                  onClick={() => handleCountryClick(countryCode)}
                   style={{
                     default: { outline: "none" },
-                    hover: { fill: "#2B6CB0", outline: "none", cursor: "pointer"},
+                    hover: { fill: "#2B6CB0", outline: "none", cursor: "pointer" },
                     pressed: { outline: "none" },
                   }}
                 />
               );
             })
           }
-        </Geographies>  
+        </Geographies>
       </ComposableMap>
       <Tooltip id="tip" float={true} />
-    
-    <CountryPanel country={selectedCountry} isOpen={isPanelOpen} onClose={closePanel} />
-    </>
+
+      <CountryPanel country={selectedCountry} isOpen={isPanelOpen} onClose={closePanel} />
+    </div>
   );
 };
 

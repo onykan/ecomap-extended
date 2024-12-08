@@ -1,11 +1,13 @@
 #topbar {
     display: flex;
     flex-direction: row;
+    width: 57%;
 }
 
 #maplegend {
     margin-left: 0.5em;
     flex-grow: 1;
+    width: 10em;
 }
 
 #maplegendInner {

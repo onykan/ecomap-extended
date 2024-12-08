@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import '../styles/IndicatorForm.css';
 
 const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, setIndicator }) => {
   const dateBegRef = useRef(null);
@@ -19,7 +20,7 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
       setDateBeg(newDateBeg);
       setDateEnd(newDateEnd);
       setIndicator(newIndicator);
-      
+
       console.log({ dateBeg: newDateBeg, dateEnd: newDateEnd, indicator: newIndicator });
     }
   };
@@ -43,8 +44,8 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
   return (
     <form onSubmit={handleSubmit}>
       <label>
-        Begin year:
         <input
+          class="slider"
           type="range"
           name="dateBeg"
           ref={dateBegRef}
@@ -53,11 +54,12 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
           max="2023"
           onChange={() => setCurrentDateBeg(dateBegRef.current.value)}
         />
-        <span>{currentDateBeg}</span>
+        <span>Begin year: {currentDateBeg}</span>
       </label>
       <label>
-        End year:
+
         <input
+          class="slider"
           type="range"
           name="dateEnd"
           ref={dateEndRef}
@@ -65,17 +67,23 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
           min="1960"
           max="2023"
           onChange={() => setCurrentDateEnd(dateEndRef.current.value)}
+
         />
-        <span>{currentDateEnd}</span>
+        <span>End year: {currentDateEnd}</span>
+
+      </label>
+      <div id="Indicator">
         Indicator:
-        <select ref={indicatorRef} defaultValue={indicator}>
+        <select ref={indicatorRef} defaultValue={indicator} id="dropdown"
+        >
           <option value="gdp">GDP</option>
           <option value="ur">Unemployment Rate</option>
           <option value="cpi">Inflation Rate (CPI)</option>
         </select>
-      </label>
-      <input type="submit" value="Submit" />
+        <input type="submit" value="Submit" />
+      </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+
     </form>
   );
 };
