@@ -153,10 +153,10 @@ const PanelForm = ({ country, setChartData, fetchCountryData, setRedraw }) => {
     try {
       axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
         fit: "y",
+        compress: "y",
       })).then((response) => {
         const fit_data = response.data[country.code].fit
         const indData = response.data[country.code].indicators;
-
 
         let r2Scores = [];
         const labels = Object.keys(indData.GDP).map(e => Number(e));
