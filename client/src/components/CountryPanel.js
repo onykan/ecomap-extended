@@ -5,6 +5,7 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import { CategoryScale, Chart as ChartJS, LinearScale, LineElement, PointElement, Title, Tooltip, Legend, plugins } from 'chart.js';
 import '../styles/CountryPanel.css';
 import PanelForm from "./PanelForm";
+import CountryInfo from "./CountryInfo";
 
 ChartJS.register(
   CategoryScale,
@@ -24,6 +25,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
   const chartRef = useRef(null);
   const [countryData, setCountryData] = useState([]);
   const [redraw, setRedraw] = useState(false);
+  const [showCountryInfo, setCountryInfo] = useState(false);
 
   // mock data for when the county is not loaded
   const [chartData, setChartData] = useState({
@@ -37,12 +39,16 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
     ]
   });
 
-
   useEffect(() => {
     if (country && isOpen) {
       fetchCountryData();
     }
   }, [country, isOpen]);
+
+  const toggleCountryInfo = (event) => {
+    event.preventDefault();
+    setCountryInfo(!showCountryInfo);
+  }
 
   const fetchCountryData = () => {
     // chartRef.current.resetZoom();
@@ -206,7 +212,6 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             datasets.forEach((dataset, i) => {
               if (chart.isDatasetVisible(i)) {
                 datasetLabel = dataset.label;
-                console.log("datasetLabel", datasetLabel);
               }
             })
 
@@ -235,7 +240,6 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
     },
   }
 
-
   return (
     <div
       style={{
@@ -253,13 +257,20 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
       {isOpen && chartData && (
         <div>
-          <button onClick={onClose} style={{ float: "right" }}>Close</button>
-          <h2>Country: {country.code}</h2>
+          <button onClick={() => { setCountryInfo(false); onClose(); }} style={{ float: "right" }}>Close</button>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <h2 style={{ marginBottom: 0 }}>Country: {countryData.name} ({country.code})</h2>
+            <button hidden onClick={toggleCountryInfo} style={{ padding: 0, paddingRight: 1, paddingLeft: 1, border: 'none' }}>&#9432;</button>
+          </div>
+          <CountryInfo showInfo={showCountryInfo} countryData={countryData} />
+
           <p>Indicator Value: {country.value}</p>
-          <PanelForm country={country} setChartData={setChartData} fetchCountryData={fetchCountryData} setRedraw={setRedraw} />
+
+          <PanelForm country={country} isOpen={isOpen} setChartData={setChartData} fetchCountryData={fetchCountryData} setRedraw={setRedraw} />
           <Line style={{ color: 'lightblue' }} ref={chartRef} redraw={redraw} data={chartData} options={options} />
         </div >
-      )}
+      )
+      }
     </div >
   )
 }
