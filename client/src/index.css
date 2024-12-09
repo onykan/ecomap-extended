@@ -5,7 +5,7 @@
 }
 
 #maplegend {
-    margin-left: 0.5em;
+    margin: 0.5em;
     flex-grow: 1;
     width: 10em;
 }

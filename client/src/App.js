@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import IndicatorForm from './components/IndicatorForm';
 import Map from './components/Map';
-import MapLegend from './components/MapLegend';
 import './App.css';
 import { Title } from 'chart.js';
 
@@ -55,11 +54,6 @@ const App = () => {
         dateEnd={dateEnd}
         indicator={indicator}
         countryNames={countryNames}
-      />
-      <MapLegend
-        id="maplegend"
-        stops={[0, 100000000000, 500000000000]}
-        colors={["red", "white", "green"]}
       />
     </div>
   );

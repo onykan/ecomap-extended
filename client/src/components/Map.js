@@ -4,6 +4,7 @@ import axios from 'axios';
 import { scaleLinear } from "d3-scale";
 import CountryPanel from "./CountryPanel";
 import { Tooltip } from 'react-tooltip';
+import MapLegend from './MapLegend';
 import '../styles/Map.css';
 
 const geoUrl =
@@ -35,6 +36,7 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames }) => {
   }, [dateBeg, dateEnd, indicator]);
 
   // Define color scales for each indicator
+  /*
   const colorScales = {
     gdp: scaleLinear().domain([-8, 0, 8]).range(["red", "white", "green"]),
     ur: scaleLinear().domain([10, 0, -2]).range(["red", "white", "green"]).clamp(true),
@@ -45,21 +47,70 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames }) => {
     urC: scaleLinear().domain([3, 7, 15]).range(["green", "white", "red"]),
     cpiC: scaleLinear().domain([-1, 1]).range(["white", "white"]),
   };
+  */
+  const colorScales = {
+    gdp: {
+      stops: [-8, 0, 8],
+      colors: ["red", "white", "green"],
+      clamp: false
+    },
+    ur: {
+      stops: [-2, 0, 10],
+      colors: ["green", "white", "red"],
+      clamp: true
+    },
+    cpi: {
+      stops: [-2, 0, 2, 4, 7],
+      colors: ["red", "white", "green", "white", "red"],
+      clamp: false
+    },
+    gdpC: {
+      stops: [0, 100000000000, 500000000000],
+      colors: ["red", "white", "green"],
+      clamp: true
+    },
+    urC: { //TODO fix color scale for urC and cpiC
+      stops: [3, 7, 15],
+      colors: ["green", "white", "red"],
+      clamp: false
+    },
+    cpiC: {
+      stops: [-1, 1],
+      colors: ["white", "white"],
+      clamp: false
+    }
+  }
 
   // choose color for the country
   const getCountryColor = (countryCode) => {
     const countryData = data[countryCode];
-    if (!countryData) return "#EEE";
+    if (!countryData) return "#888";
     const value = yearIsSame ? countryData[dateBeg] : countryData;
     if (value === null) return "#EEE";
+    let colSc;
     if (yearIsSame) {
       // Different coloring logic when year is the same
-      return colorScales[indicator + "C"](value);
+      colSc = colorScales[indicator + "C"];
     } else {
       // Existing coloring logic when years are different
-      return colorScales[indicator](value);
+      colSc = colorScales[indicator];
     }
+    return scaleLinear().domain(colSc.stops).range(colSc.colors).clamp(colSc.clamp)(value);
   };
+
+  const getGradientStops = () => {
+    let colSc;
+    if (yearIsSame) colSc = colorScales[indicator + "C"];
+    else colSc = colorScales[indicator];
+    return colSc.stops;
+  }
+
+  const getGradientColors = () => {
+    let colSc;
+    if (yearIsSame) colSc = colorScales[indicator + "C"];
+    else colSc = colorScales[indicator];
+    return colSc.colors;
+  }
 
   // Handle country click to open panel with country data
   const handleCountryClick = (countryCode) => {
@@ -98,6 +149,13 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames }) => {
       }
       }
     >
+      <div style={{position: "absolute"}}>
+        <MapLegend
+          id="maplegend"
+          stops={getGradientStops()}
+          colors={getGradientColors()}
+        />
+      </div>
       <ComposableMap data-tooltip-id="tip"
         data-tooltip-html={tooltipContent}
       >
