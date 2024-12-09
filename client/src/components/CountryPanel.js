@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import zoomPlugin from "chartjs-plugin-zoom";
 import { CategoryScale, Chart as ChartJS, LinearScale, LineElement, PointElement, Title, Tooltip, Legend, plugins } from 'chart.js';
+import '../styles/CountryPanel.css';
 import PanelForm from "./PanelForm";
 
 ChartJS.register(
@@ -199,7 +200,6 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           display: true,
           text: function(context) {
             ///determines dataset y axis label
-            console.log("context", context.chart.data.datasets);
             const datasets = context.chart.data.datasets;
             const chart = context.chart;
             let datasetLabel = '';
@@ -243,10 +243,10 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
         right: 0,
         top: 0,
         height: "100vh",
-        width: isOpen ? "600px" : "0px",
+        width: isOpen ? "40%" : "0px",
         overflow: "hidden",
-        backgroundColor: "#f4f4f4",
-        boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)",
+        backgroundColor: "#B9D9EB",
+        color: "black",
         transition: "width 0.3s ease",
         padding: isOpen ? "20px" : "0px",
       }} >
@@ -257,8 +257,8 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
           <h2>Country: {country.code}</h2>
           <p>Indicator Value: {country.value}</p>
           <PanelForm country={country} setChartData={setChartData} fetchCountryData={fetchCountryData} setRedraw={setRedraw} />
-          <Line ref={chartRef} redraw={redraw} data={chartData} options={options} />
-        </div>
+          <Line style={{ color: 'lightblue' }} ref={chartRef} redraw={redraw} data={chartData} options={options} />
+        </div >
       )}
     </div >
   )

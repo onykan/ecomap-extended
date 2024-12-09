@@ -4,6 +4,7 @@ import axios from 'axios';
 import { scaleLinear } from "d3-scale";
 import CountryPanel from "./CountryPanel";
 import { Tooltip } from 'react-tooltip';
+import '../styles/Map.css';
 
 const geoUrl =
   "https://raw.githubusercontent.com/lotusms/world-map-data/main/world.json";
@@ -86,9 +87,20 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames }) => {
   };
 
   return (
-    <>
+    <div
+      style={{
+        position: "relative",
+        height: "30%",
+        overflow: "hidden",
+        width: isPanelOpen ? "58%" : "100%",
+        transition: "width 0.3s ease",
+
+      }
+      }
+    >
       <ComposableMap data-tooltip-id="tip"
-        data-tooltip-html={tooltipContent}>
+        data-tooltip-html={tooltipContent}
+      >
         <ZoomableGroup
           center={[0, 0]}
           minZoom={1}
@@ -129,7 +141,7 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames }) => {
       <Tooltip id="tip" float={true} />
 
       <CountryPanel country={selectedCountry} isOpen={isPanelOpen} onClose={closePanel} />
-    </>
+    </div>
   );
 };
 

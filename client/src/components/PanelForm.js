@@ -2,15 +2,21 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 
 let styles = {
+  radioBlock: {
+    display: "flex",
+    width: "50%",
+  },
+
   predictFormDiv: {
-    backgroundColor: "white",
+    display: "flex",
+    flexDirection: "row",
     padding: "10px",
-    maxWidth: "250px",
+    width: "100%",
     borderRadius: "8px",
   },
 
   form: {
-    backgroundColor: "white",
+    display: "flex",
     padding: "10px",
     maxWidth: "250px",
     borderRadius: "8px",
@@ -25,7 +31,7 @@ let styles = {
   label: {
     width: "100px",
     fontSize: "16px",
-    color: "#333",
+
   },
 
   input: {
@@ -37,23 +43,7 @@ let styles = {
     fontSize: "12px",
   },
 
-  button: {
-    backgroundColor: "#f8f9fa",
-    border: "1px solid #f8f9fa",
-    borderRadius: "4px",
-    color: "#3c4043",
-    cursor: "pointer",
-    fontFamily: "arial",
-    fontSize: "14px",
-    lineHeight: "27px",
-    padding: "0 15px",
-    textAlign: "center",
-    styleHover: {
-      borderColor: "#dadce0",
-      boxShadow: "rgba(0, 0, 0, .1) 0 1px 1px",
-      color: "#202124",
-    }
-  },
+
 };
 
 const panelState = {
@@ -223,7 +213,7 @@ const PanelForm = ({ country, setChartData, fetchCountryData, setRedraw }) => {
 
   return (
     <div style={styles.predictFormDiv}>
-      <form>
+      <form style={styles.radioBlock}>
         <label class="radio-inline">
           <input type="radio" name="predictRadio" onChange={() => {
             setPredictFormState(panelState.normal);
