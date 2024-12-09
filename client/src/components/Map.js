@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ComposableMap, Geographies, Geography, Sphere, Graticule } from "react-simple-maps";
+import { ComposableMap, Geographies, Geography, Sphere, Graticule, ZoomableGroup } from "react-simple-maps";
 import axios from 'axios';
 import { scaleLinear } from "d3-scale";
 import CountryPanel from "./CountryPanel";
@@ -101,32 +101,42 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames }) => {
       <ComposableMap data-tooltip-id="tip"
         data-tooltip-html={tooltipContent}
       >
-        <Sphere stroke="#EAEAEC" fill="#1a1a1a" />
-        <Graticule stroke="white" strokeWidth={0.3} />
-        <Geographies geography={geoUrl}>
-          {({ geographies }) =>
-            geographies.map((geo) => {
-              const countryCode = geo.id;
-              return (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  fill={getCountryColor(countryCode)}
-                  onMouseEnter={() => handleMouseEnter(countryCode)}
-                  onMouseLeave={() => {
-                    setTooltipContent("");
-                  }}
-                  onClick={() => handleCountryClick(countryCode)}
-                  style={{
-                    default: { outline: "none" },
-                    hover: { fill: "#2B6CB0", outline: "none", cursor: "pointer" },
-                    pressed: { outline: "none" },
-                  }}
-                />
-              );
-            })
-          }
-        </Geographies>
+        <ZoomableGroup
+          center={[0, 0]}
+          minZoom={1}
+          maxZoom={5}
+          translateExtent={[
+            [-500, -300], // Top-left corner
+            [1300, 900],   // Bottom-right corner
+          ]}
+        >
+          <Sphere stroke="#EAEAEC" fill="#1a1a1a" />
+          <Graticule stroke="white" strokeWidth={0.3} />
+          <Geographies geography={geoUrl}>
+            {({ geographies }) =>
+              geographies.map((geo) => {
+                const countryCode = geo.id;
+                return (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    fill={getCountryColor(countryCode)}
+                    onMouseEnter={() => handleMouseEnter(countryCode)}
+                    onMouseLeave={() => {
+                      setTooltipContent("");
+                    }}
+                    onClick={() => handleCountryClick(countryCode)}
+                    style={{
+                      default: { outline: "none" },
+                      hover: { fill: "#2B6CB0", outline: "none", cursor: "pointer" },
+                      pressed: { outline: "none" },
+                    }}
+                  />
+                );
+              })
+            }
+          </Geographies>
+        </ZoomableGroup>
       </ComposableMap>
       <Tooltip id="tip" float={true} />
 
