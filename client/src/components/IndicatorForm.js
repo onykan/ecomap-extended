@@ -33,10 +33,7 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
       setError('Start year should be before or same as end year');
       return false;
     }
-    if (newDateEnd - newDateBeg > 30) {
-      setError('The maximum range is 30 years');
-      return false;
-    }
+
     setError(''); // Clear any previous errors if validation passes
     return true;
   };
