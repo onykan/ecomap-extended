@@ -265,7 +265,7 @@ router.get('/country/:code/data', async (req, res) => {
   let info = {
     name: countryData['name'],
     region: countryData['region']['value'],
-    capital: countryData['capital'],
+    capital: countryData['capitalCity'],
     longitude: countryData['longitude'],
     latitude: countryData['latitude'],
   };

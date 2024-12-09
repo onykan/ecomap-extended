@@ -10,6 +10,7 @@ let styles = {
   predictFormDiv: {
     display: "flex",
     flexDirection: "row",
+    gap: "10px",
     padding: "10px",
     width: "100%",
     borderRadius: "8px",
@@ -31,7 +32,6 @@ let styles = {
   label: {
     width: "100px",
     fontSize: "16px",
-
   },
 
   input: {
@@ -42,8 +42,6 @@ let styles = {
     borderRadius: "4px",
     fontSize: "12px",
   },
-
-
 };
 
 const panelState = {
@@ -53,7 +51,7 @@ const panelState = {
   info: 'info'
 }
 
-const PanelForm = ({ country, setChartData, fetchCountryData, setRedraw }) => {
+const PanelForm = ({ country, isOpen, setChartData, fetchCountryData, setRedraw }) => {
   const [panelFormState, setPredictFormState] = useState(panelState.normal);
   const [r2_scores, setR2Scores] = useState([]);
   const [predictDataLen, setPredictDataLen] = useState(0);
@@ -70,8 +68,16 @@ const PanelForm = ({ country, setChartData, fetchCountryData, setRedraw }) => {
         predict_data_len: predictDataLen,
         compress: "y",
       })).then((response) => {
-        const predict = response.data[country.code].predict;
-        const indData = response.data[country.code].indicators;
+        let predict = response.data[country.code].predict;
+        let indData = response.data[country.code].indicators;
+
+        // Removes null indicators
+        indData = Object.fromEntries(
+          Object.entries(indData).filter(([key]) => indData[key] != null)
+        );
+        predict = Object.fromEntries(
+          Object.entries(predict).filter(([key]) => predict[key] != null)
+        );
 
         const labelsData = Object.keys(indData.GDP).map(e => Number(e));
         const max_year = Math.max(...labelsData) + 1;
@@ -192,24 +198,27 @@ const PanelForm = ({ country, setChartData, fetchCountryData, setRedraw }) => {
   };
 
   useEffect(() => {
-    switch (panelFormState) {
-      case panelState.normal:
-        setRedraw(false);
-        fetchCountryData();
-        break;
-      case panelState.predict:
-        setRedraw(true);
-        fetchPredict();
-        break;
-      case panelState.fit:
-        setRedraw(true);
-        linearRegFit();
-        break;
-      case panelState.info:
-        setRedraw(false);
-        break;
+    setRedraw(false);
+    if (country && isOpen) {
+      switch (panelFormState) {
+        case panelState.normal:
+          setRedraw(false);
+          fetchCountryData();
+          break;
+        case panelState.predict:
+          setRedraw(true);
+          fetchPredict();
+          break;
+        case panelState.fit:
+          setRedraw(true);
+          linearRegFit();
+          break;
+        case panelState.info:
+          setRedraw(false);
+          break;
+      }
     }
-  }, [panelFormState]);
+  }, [country, panelFormState]);
 
   return (
     <div style={styles.predictFormDiv}>
