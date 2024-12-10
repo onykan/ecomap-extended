@@ -26,7 +26,6 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
   const [countryData, setCountryData] = useState([]);
   const [redraw, setRedraw] = useState(false);
   const [showCountryInfo, setCountryInfo] = useState(false);
-  const [compare, setCompare] = useState(false);
   // mock data for when the county is not loaded
   const [chartData, setChartData] = useState({
     labels: [0, 0, 0],
@@ -269,11 +268,6 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
           <PanelForm country={country} isOpen={isOpen} setChartData={setChartData} fetchCountryData={fetchCountryData} setRedraw={setRedraw} />
           <Line style={{ color: 'lightblue' }} ref={chartRef} redraw={redraw} data={chartData} options={options} />
-          <div>
-            <button onClick={() => setCompare(!compare)} style={{ backgroundColor: compare ? 'lightgreen' : 'lightcoral', color: 'white' }}>
-              Toggle Compare (Current: {compare.toString()})
-            </button>
-          </div>
         </div >
       )}
     </div >
