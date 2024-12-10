@@ -4,7 +4,6 @@ import axios from 'axios';
 import IndicatorForm from './components/IndicatorForm';
 import Map from './components/Map';
 import './App.css';
-import { Title } from 'chart.js';
 
 const App = () => {
   const [dateBeg, setDateBeg] = useState('2022');

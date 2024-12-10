@@ -42,7 +42,7 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
     <form onSubmit={handleSubmit}>
       <label>
         <input
-          class="slider"
+          className="slider"
           type="range"
           name="dateBeg"
           ref={dateBegRef}
@@ -56,7 +56,7 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
       <label>
 
         <input
-          class="slider"
+          className="slider"
           type="range"
           name="dateEnd"
           ref={dateEndRef}

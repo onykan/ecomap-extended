@@ -26,7 +26,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
   const [countryData, setCountryData] = useState([]);
   const [redraw, setRedraw] = useState(false);
   const [showCountryInfo, setCountryInfo] = useState(false);
-
+  const [compare, setCompare] = useState(false);
   // mock data for when the county is not loaded
   const [chartData, setChartData] = useState({
     labels: [0, 0, 0],
@@ -104,7 +104,6 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
   ///These are the options for the chart
   const options = {
-    responsive: true,
     plugins: {
       title: {
         text: 'Country Data',
@@ -119,7 +118,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             return dataset.text;
           });
 
-          const indexes = datasets.reduce(function(ind, e, i) {
+          const indexes = datasets.reduce(function (ind, e, i) {
             if (e === legendItem.text)
               ind.push(i);
             return ind;
@@ -204,7 +203,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
       y: {
         title: {
           display: true,
-          text: function(context) {
+          text: function (context) {
             ///determines dataset y axis label
             const datasets = context.chart.data.datasets;
             const chart = context.chart;
@@ -240,6 +239,8 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
     },
   }
 
+
+
   return (
     <div
       style={{
@@ -268,9 +269,13 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
           <PanelForm country={country} isOpen={isOpen} setChartData={setChartData} fetchCountryData={fetchCountryData} setRedraw={setRedraw} />
           <Line style={{ color: 'lightblue' }} ref={chartRef} redraw={redraw} data={chartData} options={options} />
+          <div>
+            <button onClick={() => setCompare(!compare)} style={{ backgroundColor: compare ? 'lightgreen' : 'lightcoral', color: 'white' }}>
+              Toggle Compare (Current: {compare.toString()})
+            </button>
+          </div>
         </div >
-      )
-      }
+      )}
     </div >
   )
 }
