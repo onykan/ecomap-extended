@@ -223,24 +223,24 @@ const PanelForm = ({ country, isOpen, setChartData, fetchCountryData, setRedraw 
   return (
     <div style={styles.predictFormDiv}>
       <form style={styles.radioBlock}>
-        <label class="radio-inline">
+        <label className="radio-inline">
           <input type="radio" name="predictRadio" onChange={() => {
             setPredictFormState(panelState.normal);
           }}
             checked={panelFormState === panelState.normal} />Normal
         </label>
-        <label class="radio-inline">
+        <label className="radio-inline">
           <input type="radio" name="predictRadio" onChange={() => {
             setPredictFormState(panelState.predict);
           }}
             checked={panelFormState === panelState.predict} />Predict
         </label>
-        <label class="radio-inline">
+        <label className="radio-inline">
           <input type="radio" name="predictRadio" onChange={() => {
             setPredictFormState(panelState.fit);
           }} checked={panelFormState === panelState.fit} />Fit
         </label>
-        <label class="radio-inline">
+        <label className="radio-inline">
           <input type="radio" name="predictRadio" onChange={() => {
             setPredictFormState(panelState.info)
           }}
