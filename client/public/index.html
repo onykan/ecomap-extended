@@ -1,164 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="shortcut icon" href="%PUBLIC_URL%/ecomap.png" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
-    <meta name="theme-color" content="#000000" />
-    <!--
-      manifest.json provides metadata used when your web app is added to the
-      homescreen on Android. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>EcoMap</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+<head>
+  <meta charset="utf-8" />
+  <link rel="shortcut icon" href="%PUBLIC_URL%/ecomap.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <title>EcoMap</title>
+</head>
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+</body>
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-
-    <!--
-        TODO: FOR DEBUGGING
-        REMOVE ONCE FRONTEND DEVELOPMENT BEGINS
-    -->
-      <button name="test_button" type="button" id="testbutton">
-        Check uptime
-      </button>
-      <p id="testchecked"></p>
-      <p id="testuptime"></p>
-      </p>
-      <script>
-        const but = document.querySelector("#testbutton");
-        const che = document.querySelector("#testchecked");
-        const upt = document.querySelector("#testuptime");
-
-        but.addEventListener("click", getTime);
-
-        async function getTime() {
-          // Test uptime
-          const url = "./uptime";
-          try {
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(`Response status: ${response.status}`);
-            }
-
-            const json = await response.json();
-            console.log(json);
-
-            let checked = new Date(json.checked);
-            let uptime = json.uptime;
-            // Dirty way of converting epoch to hours, minutes and seconds
-            let hours = Math.floor(uptime * 0.00000027777778);
-            uptime = uptime - (hours * (1 / 0.00000027777778));
-            let minutes = Math.floor(uptime * 0.00001666666667);
-            uptime = uptime - (minutes * (1 / 0.00001666666667));
-            let seconds = Math.floor(uptime / 1000);
-
-            che.textContent = "Checked at " + checked.toISOString();
-            upt.textContent = "Server uptime " +
-            new Intl.NumberFormat('en-IN', { minimumIntegerDigits: 2 }).format(
-              hours,
-            ) +
-            ":" +
-            new Intl.NumberFormat('en-IN', { minimumIntegerDigits: 2 }).format(
-              minutes,
-            ) +
-            ":" +
-            new Intl.NumberFormat('en-IN', { minimumIntegerDigits: 2 }).format(
-              seconds,
-            );
-          } catch (error) {
-            console.error(error.message);
-            che.textContent = "Uptime check failed :(";
-            upt.textContent = "";
-          }
-        }
-      </script>
-
-
-    <!-- Temporary testing -->
-    <p>Some GDP api testing</p>
-    <form action="javascript:getGDP(yearBeg.value, yearEnd.value)">
-      <label for="yearBeg">Begin year:</label>
-      <input type="text" id="yearBeg" name="yearBeg"><br><br>
-      <label for="yearEnd">End year:</label>
-      <input type="text" id="yearEnd" name="yearEnd"><br><br>
-      <input type="submit" value="Submit">
-    </form>
-
-    <button id="clearDiv">Clear</button>
-    <div id="gdps">
-      <!-- GDPs inserted here -->
-    </div>
-
-    <script>
-      const clearDivBut = document.querySelector("#clearDiv");
-      clearDivBut.addEventListener("click", clearDiv);
-
-      function clearDiv() {
-        document.getElementById("gdps").innerHTML = "";
-      }
-
-      async function getIncomeLevels() {
-        const url = "./api/country/all/incomelevel";
-        const res = await fetch(url);
-        return await res.json();
-      }
-
-      async function getGDP(yBeg, yEnd) {
-        const url = "./api/indicator/gdp";
-
-        const res = await fetch(url + "?" + new URLSearchParams({
-            dateBeg: yBeg,
-            dateEnd: yEnd,
-        }).toString());
-
-        const data = await res.json();
-        console.log(data);
-        if (res.status == 404) return;
-
-        const incomeLevels = await getIncomeLevels();
-        console.log(incomeLevels);
-
-        const layerdata = await (await fetch("./api/datalayer/uraapc?" + new URLSearchParams({
-            dateBeg: yBeg,
-            dateEnd: yEnd,
-        }).toString())).json();
-        console.log(layerdata);
-
-        document.getElementById("gdps").innerHTML = "";
-        for (let [key, value] of Object.entries(data)) {
-          document.getElementById("gdps")
-            .innerHTML +=
-              `<div>
-                <h3 style='margin:0em; padding-top:1em;'>${key} | ${value[0].country.value}</h3>
-                ${incomeLevels[key] ? `<p style='margin:0em'>Income level: ${incomeLevels[key].value}</p>` : ""}
-                ${value.map(e => {return "<p style='padding-left:1em; margin:0em;'>" + e.date + ": " + e.value + "</p>";}).join('')}
-              </div>`;
-        }
-      }
-    </script>
-  </body>
 </html>

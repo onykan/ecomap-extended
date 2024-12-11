@@ -7,6 +7,7 @@ require('dotenv').config({ path: '../.env' });
 const app = express();
 const PORT = process.env.PORT || 3001;
 const HOSTNAME = process.env.HOSTNAME_SERVER || 'localhost';
+const PROD = process.env.NODE_ENV == 'production';
 
 const start = Date.now();
 
@@ -33,7 +34,7 @@ app.get('/uptime', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/public/index.html'));
+    res.sendFile(path.join(__dirname, `../client/${PROD ? 'build' : 'public'}/index.html`));
 });
 
 //Serving react on routes unused by previous routing

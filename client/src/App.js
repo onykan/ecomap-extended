@@ -36,8 +36,6 @@ const App = () => {
     fetchIndicators();
   }, []);
 
-  // TODO: IndicatorsInfo scaling properly with screen width
-  // Or change placement or something
   return (
     <div >
       <div id="wideTopbar">

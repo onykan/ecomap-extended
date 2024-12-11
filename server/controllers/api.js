@@ -222,7 +222,6 @@ router.get('/country', async (req, res) => {
 
 router.get('/country/:code', async (req, res) => {
   const countryCode = req.params.code;
-  // TODO: maybe keep countries in memory or database for faster access
   const country = await fetchDataApi(apiUrl + "/country/" + countryCode);
   resOrMsg(res, `No country found with given value '${countryCode}'`, country);
 })
@@ -252,7 +251,6 @@ router.get('/country/:code/name', async (req, res) => {
 // - `mrv` (optional): Most recent values (integer) overrides range specified with beg and end.
 // - `ind` (optional): Specify one or more indicator codes to only fetch data for those.
 //                     Multiple 'ind' params can be used to add indicators (`?ind=GDP&ind=UR`).
-// TODO: optimize
 router.get('/country/:code/data', async (req, res) => {
   const country = req.params.code;
 
@@ -408,7 +406,6 @@ function getIndicator(indId) {
 }
 
 // Checks if the data is invalid
-// TODO: could be better
 function noData(data) {
   return !data || data.hasOwnProperty('message')
 }
@@ -433,13 +430,13 @@ async function getIndicators() {
 // mrv=1 returns only the most recent value for the indicator.
 async function getByIndicator(countryCode = "all", indicator, ...dateRangeParams) {
   let queryParams = ``;
+  let gapfill = 'Y';
+  // gapfill = 'N' ignores NULL values
+  // gapfill = 'Y' gets all the values
   if (dateRangeParams) {
     if (dateRangeParams.length == 1) {
       const [mrv] = dateRangeParams;
-      // TODO: preferred option
-      // gapfill = 'N' ignores NULL values
-      // gapfill = 'Y' gets all the values
-      queryParams = `mrv=${mrv}&gapfill=Y`;
+      queryParams = `mrv=${mrv}&gapfill=${gapfill}`;
     }
     else if (dateRangeParams.length == 2) {
       const [dateBeg, dateEnd] = dateRangeParams;
@@ -551,39 +548,6 @@ function avgOverRangeFormator(innerObj, yearBegin, yearEnd) {
 
   return sum / (end - begin);
 }
-
-
-async function main() {
-  // const indicators = await getIndicators();
-
-  // All countries
-  // const countries = await fetchData(apiUrl + "/country", "format=json&per_page=1000");
-  // console.log(countries);
-
-  // Gets GDP of all countries
-  // const gdpAllCountries = await getByIndicator("all", "NY.GDP.MKTP.KD", 2013, 2023);
-  // let gdpMap = listAsMapByKey(gdpAllCountries, "countryiso3code");
-  // console.log(gdpMap);
-  // console.log(gdpMap["FIN"]);
-
-  // Income levels of all countries
-  // Could possibly be used to color code countries on map
-  // let incomeLevels = {}
-  // for (let c = 0; c < countries[1].length; c++) {
-  //   incomeLevels[countries[1][c]["id"]] = countries[1][c]["incomeLevel"];
-  // }
-  // console.log(incomeLevels);
-
-
-  // const gdpID = await getIndicatorID("GDP (current US$)");
-  // const finGDB = await getByIndicator("FIN", gdpID, 2010, 2012);
-  // console.log(finGDB);
-
-  // const inds = await getMatchingIndicators("");
-  // inds.forEach((ind) => console.log(ind));
-}
-
-// main();
 
 module.exports = router;
 
