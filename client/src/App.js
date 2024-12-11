@@ -43,15 +43,10 @@ const App = () => {
       <div id="wideTopbar">
         <div id="topbar">
           <div id="Title">
-            <div style={{ display: "inline-block", width: "60%" }}>
-              <h1>World EcoMap</h1>
-              <p>          This map shows the selected indicator for each country. The color of a country corresponds to the value of the indicator.
-                You can select the indicator and the year range to display.</p>
-            </div>
-            <div style={{ display: "block", position: "relative", float: "right", width: "40%", minWidth: "20em" }}>
-              <button onClick={() => { setIndInfoVisible(!indicatorsInfoOpen) }} style={{ padding: 3, width: "100px", float: "right" }}>Indicators</button>
-              <IndicatorsInfo showInfo={indicatorsInfoOpen} indicators={indicators} />
-            </div>
+            <h1>World EcoMap</h1>
+            <p>This map shows the selected indicator for each country. The color of a country corresponds to the value of the indicator.
+              You can select the indicator and the year range to display.</p>
+            <p>The data used in this project is sourced from the World Bank Open Data platform. For more information, visit <a href='https://data.worldbank.org'>World Bank Open Data</a>.</p>
           </div>
           <IndicatorForm
             id="indicatorform"
@@ -64,18 +59,25 @@ const App = () => {
           />
         </div>
         <div id='Help'>
-          <h2>Help</h2>
-          <p>TODO: Click on a country to see the value of the indicator.</p>
+          <div style={{ display: "block", position: "relative", width: "40%", minWidth: "20em" }}>
+            <button onClick={() => { setIndInfoVisible(!indicatorsInfoOpen) }} style={{ padding: 3, width: "100px" }}>Indicators</button>
+            <IndicatorsInfo showInfo={indicatorsInfoOpen} indicators={indicators} />
+          </div>
+          <div style={{ borderLeft: '1px solid lightblue', paddingLeft: '2em' }}>
+            <h2>Help</h2>
+            <p>Choose a start and end year to see the change of data in the assigned years. </p>
+            <p>Click a country to see detailed information about the chosen country. </p>
+          </div>
 
         </div>
-      </div>
+      </div >
       <Map
         dateBeg={dateBeg}
         dateEnd={dateEnd}
         indicator={indicator}
         countryNames={countryNames}
       />
-    </div>
+    </div >
   );
 }
 

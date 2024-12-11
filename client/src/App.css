@@ -31,11 +31,13 @@ h1 {
 margin: auto;
 }
 
+a {
+  color: lightblue;
+}
+
 #Title {
-  display: flex;
   font-size: 1em;
   margin: 10px;
-
   margin: 0 ;
   border-right: 1px solid lightblue;
   margin-bottom: 10px;
@@ -51,7 +53,11 @@ margin: auto;
 }
 
 #Help {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
   margin: 10px;
+  width: 41%;
   padding-left:30px;
   border-left: 1px solid lightblue;
 }
