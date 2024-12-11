@@ -24,9 +24,9 @@ const INDICATOR_COUNT = 7;
 const CountryPanel = ({ country, isOpen, onClose }) => {
   const chartRef = useRef(null);
   const [countryData, setCountryData] = useState([]);
-  const [redraw, setRedraw] = useState(false);
   const [showCountryInfo, setCountryInfo] = useState(false);
   // mock data for when the county is not loaded
+  const [options, setOptions] = useState({});
   const [chartData, setChartData] = useState({
     labels: [0, 0, 0],
     datasets: [
@@ -43,6 +43,13 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
       fetchCountryData();
     }
   }, [country, isOpen]);
+
+  useEffect(() => {
+    if (country && isOpen) {
+      let opts = getOptions();
+      setOptions(opts);
+    }
+  }, [chartData]);
 
   const toggleCountryInfo = (event) => {
     event.preventDefault();
@@ -102,143 +109,143 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
   };
 
   ///These are the options for the chart
-  const options = {
-    plugins: {
-      title: {
-        text: 'Country Data',
-        display: true,
-      },
-      legend: {
-        title: { text: 'TOGGLE', display: true },
-        position: "right",
-        /// toggles the visibility of the datasets
-        onClick: (e, legendItem, legend, chart) => {
-          const datasets = legend.legendItems.map((dataset, index) => {
-            return dataset.text;
-          });
-
-          const indexes = datasets.reduce(function (ind, e, i) {
-            if (e === legendItem.text)
-              ind.push(i);
-            return ind;
-          }, []);
-
-          legend.chart.data.datasets.forEach((dataset, i) => {
-            if (!indexes.includes(i)) {
-              if (i >= INDICATOR_COUNT) {
-                dataset.borderColor = 'rgba(255,0,0,1)';
-                legend.chart.getDatasetMeta(i).hidden = true;
-              } else {
-                dataset.borderColor = 'rgba(0,0,0,1)';
-              }
-              legend.chart.hide(i);
-            }
-          });
-          indexes.forEach(i => {
-            if (legend.chart.isDatasetVisible(i) === true) {
-              legend.chart.hide(i);
-            }
-            else {
-              legend.chart.show(i);
-            }
-          });
+  const getOptions = () => {
+    return {
+      plugins: {
+        title: {
+          text: 'Country Data',
+          display: true,
         },
-        labels: {
-          boxWidth: 20,
-          /// generates the legend labels with a darker color when visible
-          generateLabels: (chart) => {
-            const visibility = []
-            chart.data.datasets.forEach((dataset, i) => {
-              if (chart.isDatasetVisible(i) === true) {
-                visibility.push('rgba(102,102,102,1)');
-              } else {
-                visibility.push('rgba(102,102,102,0.5)');
+        legend: {
+          title: { text: 'TOGGLE', display: true },
+          position: "right",
+          /// toggles the visibility of the datasets
+          onClick: (e, legendItem, legend, chart) => {
+            const datasets = legend.legendItems.map((dataset, index) => {
+              return dataset.text;
+            });
+
+            const indexes = datasets.reduce(function(ind, e, i) {
+              if (e === legendItem.text)
+                ind.push(i);
+              return ind;
+            }, []);
+
+            legend.chart.data.datasets.forEach((dataset, i) => {
+              if (!indexes.includes(i)) {
+                if (i >= INDICATOR_COUNT) {
+                  dataset.borderColor = 'rgba(255,0,0,1)';
+                  legend.chart.getDatasetMeta(i).hidden = true;
+                } else {
+                  dataset.borderColor = 'rgba(0,0,0,1)';
+                }
+                legend.chart.hide(i);
               }
             });
-            return chart.data.datasets.map(
-              (dataset, i) => {
-                if (i >= INDICATOR_COUNT) {
+            indexes.forEach(i => {
+              if (legend.chart.isDatasetVisible(i) === true) {
+                legend.chart.hide(i);
+              }
+              else {
+                legend.chart.show(i);
+              }
+            });
+          },
+          labels: {
+            boxWidth: 20,
+            /// generates the legend labels with a darker color when visible
+            generateLabels: (chart) => {
+              const visibility = []
+              chart.data.datasets.forEach((dataset, i) => {
+                if (chart.isDatasetVisible(i) === true) {
+                  visibility.push('rgba(102,102,102,1)');
+                } else {
+                  visibility.push('rgba(102,102,102,0.5)');
+                }
+              });
+              return chart.data.datasets.map(
+                (dataset, i) => {
+                  if (i >= INDICATOR_COUNT) {
+                    return {
+                      text: dataset.label,
+                      strokeStyle: dataset.borderColor,
+                      fontColor: visibility[i],
+                      fillStyle: 'rgba(0,0,0,0)',
+                    }
+                  }
                   return {
                     text: dataset.label,
                     strokeStyle: dataset.borderColor,
                     fontColor: visibility[i],
-                    fillStyle: 'rgba(0,0,0,0)',
+                    fillStyle: visibility[i],
                   }
                 }
-                return {
-                  text: dataset.label,
-                  strokeStyle: dataset.borderColor,
-                  fontColor: visibility[i],
-                  fillStyle: visibility[i],
-                }
-              }
-            )
-          }
-        }
-      },
-      zoom: {
-        pan: {
-          enabled: true,
-          mode: "x"
-        },
-        zoom: {
-          wheel: {
-            enabled: true
-          },
-          pinch: {
-            enabled: true
-          },
-          mode: "x"
-        }
-      }
-    },
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: 'Year'
-        }
-      },
-      y: {
-        title: {
-          display: true,
-          text: function (context) {
-            ///determines dataset y axis label
-            const datasets = context.chart.data.datasets;
-            const chart = context.chart;
-            let datasetLabel = '';
-            datasets.forEach((dataset, i) => {
-              if (chart.isDatasetVisible(i)) {
-                datasetLabel = dataset.label;
-              }
-            })
-
-            switch (datasetLabel) {
-              case 'GDPUSD':
-                return 'Gross domestic product (GDP) in $USD';
-              case 'GDP':
-                return 'Gross Domestic Product (GDP)';
-              case 'CPI':
-                return 'Consumer Price Index (CPI)';
-              case 'UR':
-                return 'Unemployment Rate (%)';
-              case 'IMP':
-                return 'Import of goods ($USD)';
-              case 'PSD':
-                return 'Poverty Rate (%)';
-              case 'EXP':
-                return 'Exports of goods ($USD)';
-              default:
-                return 'Value';
+              )
             }
           }
-
+        },
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: "x"
+          },
+          zoom: {
+            wheel: {
+              enabled: true
+            },
+            pinch: {
+              enabled: true
+            },
+            mode: "x"
+          }
         }
-      }
-    },
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Year'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: function(context) {
+              ///determines dataset y axis label
+              const datasets = context.chart.data.datasets;
+              const chart = context.chart;
+              let datasetLabel = '';
+              datasets.forEach((dataset, i) => {
+                if (chart.isDatasetVisible(i)) {
+                  datasetLabel = dataset.label;
+                }
+              })
+
+              switch (datasetLabel) {
+                case 'GDPUSD':
+                  return 'Gross domestic product (GDP) in $USD';
+                case 'GDP':
+                  return 'Gross Domestic Product (GDP)';
+                case 'CPI':
+                  return 'Consumer Price Index (CPI)';
+                case 'UR':
+                  return 'Unemployment Rate (%)';
+                case 'IMP':
+                  return 'Import of goods ($USD)';
+                case 'PSD':
+                  return 'Poverty Rate (%)';
+                case 'EXP':
+                  return 'Exports of goods ($USD)';
+                default:
+                  return 'Value';
+              }
+            }
+
+          }
+        }
+      },
+    }
   }
-
-
 
   return (
     <div
@@ -266,8 +273,8 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
           <p>Indicator Value: {country.value}</p>
 
-          <PanelForm country={country} isOpen={isOpen} setChartData={setChartData} fetchCountryData={fetchCountryData} setRedraw={setRedraw} />
-          <Line style={{ color: 'lightblue' }} ref={chartRef} redraw={redraw} data={chartData} options={options} />
+          <PanelForm country={country} isOpen={isOpen} setChartData={setChartData} fetchCountryData={fetchCountryData} />
+          <Line style={{ color: 'lightblue' }} ref={chartRef} data={chartData} options={options} />
         </div >
       )}
     </div >
