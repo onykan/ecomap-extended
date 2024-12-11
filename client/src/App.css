@@ -32,7 +32,7 @@ margin: auto;
 }
 
 #Title {
-
+  display: flex;
   font-size: 1em;
   margin: 10px;
 
@@ -87,4 +87,26 @@ h2 {
   to {
     transform: rotate(360deg);
   }
+}
+
+.ind-tooltip {
+  position: relative;
+  display: inline-block;
+  padding-left: 5px;
+}
+
+.ind-tooltip .ind-tooltiptext {
+  visibility: hidden;
+  width: 200px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+}
+
+.ind-tooltip:hover .ind-tooltiptext {
+  visibility: visible;
 }
