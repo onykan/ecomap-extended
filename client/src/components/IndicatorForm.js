@@ -8,13 +8,14 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
   const [error, setError] = useState('');
   const [currentDateBeg, setCurrentDateBeg] = useState(dateBeg);
   const [currentDateEnd, setCurrentDateEnd] = useState(dateEnd);
+  const [singleSlider, setSingleSlider] = useState(false);
 
   const handleSubmit = (event) => {
     event.preventDefault();
 
     if (validateValues()) {
       const newDateBeg = dateBegRef.current.value;
-      const newDateEnd = dateEndRef.current.value;
+      const newDateEnd = singleSlider ? newDateBeg : dateEndRef.current.value;
       const newIndicator = indicatorRef.current.value;
 
       setDateBeg(newDateBeg);
@@ -27,7 +28,7 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
 
   const validateValues = () => {
     const newDateBeg = dateBegRef.current.value;
-    const newDateEnd = dateEndRef.current.value;
+    const newDateEnd = singleSlider ? newDateBeg : dateEndRef.current.value;
 
     if (newDateBeg > newDateEnd) {
       setError('Start year should be before or same as end year');
@@ -40,6 +41,9 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
 
   return (
     <form onSubmit={handleSubmit}>
+      <button type="button" onClick={() => setSingleSlider(!singleSlider)}>
+        {singleSlider ? 'Year range' : 'One year'}
+      </button>
       <label>
         <input
           className="slider"
@@ -53,8 +57,9 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
         />
         <span>Begin year: {currentDateBeg}</span>
       </label>
-      <label>
-
+      
+      {!singleSlider && (
+        <label>
         <input
           className="slider"
           type="range"
@@ -64,11 +69,10 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
           min="1960"
           max="2023"
           onChange={() => setCurrentDateEnd(dateEndRef.current.value)}
-
         />
         <span>End year: {currentDateEnd}</span>
-
       </label>
+      )}
       <div id="Indicator">
         Indicator:
         <select ref={indicatorRef} defaultValue={indicator} id="dropdown"
@@ -80,6 +84,7 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
         <input type="submit" value="Submit" />
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+
 
     </form>
   );

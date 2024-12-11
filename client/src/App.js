@@ -65,7 +65,8 @@ const App = () => {
           </div>
           <div style={{ borderLeft: '1px solid lightblue', paddingLeft: '2em' }}>
             <h2>Help</h2>
-            <p>Choose a start and end year to see the change of data in the assigned years. </p>
+            <p>Choose a start and end year to see the percentual change of data in the assigned years. </p>
+            <p>Using only one year gives the absolute value of chosen indicator for the chosen year. </p>
             <p>Click a country to see detailed information about the chosen country. </p>
           </div>
 
