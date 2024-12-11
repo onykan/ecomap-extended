@@ -51,7 +51,7 @@ const panelState = {
   info: 'info'
 }
 
-const PanelForm = ({ country, isOpen, setChartData, fetchCountryData, setRedraw }) => {
+const PanelForm = ({ country, isOpen, setChartData, fetchCountryData }) => {
   const [panelFormState, setPredictFormState] = useState(panelState.normal);
   const [r2_scores, setR2Scores] = useState([]);
   const [predictDataLen, setPredictDataLen] = useState(0);
@@ -156,11 +156,16 @@ const PanelForm = ({ country, isOpen, setChartData, fetchCountryData, setRedraw 
 
         let r2Scores = [];
         const labels = Object.keys(indData.GDP).map(e => Number(e));
+        const max_year = Math.max(...labels);
+        labels.push(max_year + 1);
         let datasets = [];
         Object.keys(indData).forEach((key) => {
           datasets.push({
             label: key,
-            data: Object.values(indData[key]),
+            data: Object.keys(indData[key]).reduce((dataset, k) => {
+              dataset.push({ x: Number(k), y: indData[key][k] });
+              return dataset;
+            }, []),
             borderColor: 'rgba(0,0,0,1)',
             usePointStyle: true,
             pointRadius: 0,
@@ -172,7 +177,10 @@ const PanelForm = ({ country, isOpen, setChartData, fetchCountryData, setRedraw 
         Object.keys(fit_data).forEach((key) => {
           datasets.push({
             label: key,
-            data: fit_data[key].y_hat,
+            data: Object.keys(fit_data[key].y_hat).reduce((dataset, k) => {
+              dataset.push({ x: Number(fit_data[key].x[k]), y: fit_data[key].y_hat[k] });
+              return dataset;
+            }, []),
             borderColor: 'rgba(255,0,0,1)',
             usePointStyle: true,
             pointRadius: 0,
@@ -198,23 +206,18 @@ const PanelForm = ({ country, isOpen, setChartData, fetchCountryData, setRedraw 
   };
 
   useEffect(() => {
-    setRedraw(false);
     if (country && isOpen) {
       switch (panelFormState) {
         case panelState.normal:
-          setRedraw(false);
           fetchCountryData();
           break;
         case panelState.predict:
-          setRedraw(true);
           fetchPredict();
           break;
         case panelState.fit:
-          setRedraw(true);
           linearRegFit();
           break;
         case panelState.info:
-          setRedraw(false);
           break;
       }
     }
