@@ -24,6 +24,8 @@ const INDICATOR_COUNT = 7;
 const CountryPanel = ({ country, isOpen, onClose }) => {
   const chartRef = useRef(null);
   const [countryData, setCountryData] = useState([]);
+  const [countryCmpData, setCountryCmpData] = useState(null);
+  const [cmpMode, setCmpMode] = useState(false);
   const [showCountryInfo, setCountryInfo] = useState(false);
   // mock data for when the county is not loaded
   const [options, setOptions] = useState({});
@@ -38,40 +40,87 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
     ]
   });
 
-  useEffect(() => {
-    if (country && isOpen) {
-      fetchCountryData();
-    }
-  }, [country, isOpen]);
+  const combineChartData = (dataA, dataB) => {
+    let updatedLabels = [...dataA.labels];
+    let updatedDatasets = [...dataA.datasets];
+    dataB.labels.forEach(e => { updatedLabels.push(e) });
+    dataB.datasets.forEach(e => { updatedDatasets.push(e) });
+    setChartData({ labels: Array.from(new Set(updatedLabels.map(Number))).sort((a, b) => a - b), datasets: updatedDatasets });
+  }
 
-  useEffect(() => {
-    if (country && isOpen) {
-      let opts = getOptions();
-      setOptions(opts);
-    }
-  }, [chartData]);
+  const appendToChart = (data) => {
+    combineChartData(chartData, data);
+  }
 
   const toggleCountryInfo = (event) => {
     event.preventDefault();
     setCountryInfo(!showCountryInfo);
   }
 
-  const fetchCountryData = () => {
+  useEffect(() => {
+    const fetchData = async () => {
+      if (country && isOpen) {
+        console.log(country);
+        if (cmpMode && !countryCmpData) {
+          let cData = await fetchCountryData(country.code, setCountryCmpData);
+          appendToChart(cData);
+        }
+        else if (cmpMode) {
+          let cData = await fetchCountryData(countryData['code'], setCountryData);
+          let cDataCmp = await fetchCountryData(country.code, setCountryCmpData);
+          await Promise.all([cData, cDataCmp]);
+          combineChartData(cData, cDataCmp);
+        }
+        else {
+          let cData = await fetchCountryData(country.code, setCountryData);
+          setChartData(cData);
+        }
+      }
+    }
+    fetchData();
+  }, [country, isOpen]);
+
+
+  useEffect(() => {
+    if (country && isOpen) {
+      setOptions(null);
+      let opts = getOptions();
+      setOptions(opts);
+    }
+  }, [chartData]);
+
+  useEffect(() => {
+    if (country && isOpen) {
+      const fetchData = async () => {
+        let cData = await fetchCountryData(countryData['code']);
+        setChartData(cData);
+      }
+      if (cmpMode) {
+      } else {
+        console.log("opts", options);
+        setCountryCmpData(null);
+        fetchData();
+      }
+    }
+  }, [cmpMode]);
+
+  const fetchCountryData = async (countryCode = country.code, setCountryDataFunc = setCountryData) => {
     // chartRef.current.resetZoom();
     try {
       // Fix for Djibouti
-      if (country.code === "-99") {
-        country.code = "DJI";
+      if (countryCode === "-99") {
+        countryCode = "DJI";
       }
       // Fix for Antarctica
-      if (country.code === "ATA" || country.code === "ESH" || country.code === "GUF") {
+      if (countryCode === "ATA" || countryCode === "ESH" || countryCode === "GUF") {
         return
       }
-      axios.get(`/api/country/${country.code}/data?compress=y`)
+      return axios.get(`/api/country/${countryCode}/data?compress=y`)
         .then((response) => {
-          const data = response.data[country.code].info;
-          setCountryData(data);
-          const cData = response.data[country.code].indicators
+          const data = response.data[countryCode].info;
+          console.log("info: ", data);
+          setCountryDataFunc(data);
+          const cData = response.data[countryCode].indicators
           console.log("data", cData);
           let labels = Object.keys(cData.GDP).map(Number);
           const max_year = Math.max(...labels);
@@ -97,10 +146,10 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
             return dataset;
           });
           console.log("datasets", datasets);
-          setChartData({
+          return {
             labels: labels,
-            datasets: datasets,
-          })
+            datasets: datasets
+          };
         }
         );
     } catch (error) {
@@ -264,16 +313,38 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
       {isOpen && chartData && (
         <div>
-          <button onClick={() => { setCountryInfo(false); onClose(); }} style={{ float: "right" }}>Close</button>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <h2 style={{ marginBottom: 0 }}>Country: {countryData.name} ({country.code})</h2>
-            <button hidden onClick={toggleCountryInfo} style={{ padding: 0, paddingRight: 1, paddingLeft: 1, border: 'none' }}>&#9432;</button>
+          <button onClick={() => { setCountryInfo(false); setCmpMode(false); onClose(); }} style={{ float: "right" }}>Close</button>
+          <button onClick={() => { setCmpMode(!cmpMode); }} style={{ float: "right" }}>Compare</button>
+          <div >
+            {cmpMode && (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "inline-flex", alignItems: "center" }}>
+                  <div className="color-box" style={{ backgroundColor: "black", width: "10px", height: "10px", margin: "10px" }}></div>
+                  <h2 style={{ marginBottom: 0 }}>{countryData.name} ({countryData.code})</h2>
+                </div>
+                {countryCmpData && (
+                  <div style={{ display: "inline-flex", alignItems: "center" }}>
+                    <div className="color-box" style={{ backgroundColor: "red", width: "10px", height: "10px", margin: "10px" }}></div>
+                    <h2 style={{ marginBottom: 0 }}>{countryCmpData.name} ({countryCmpData.code})</h2>
+                  </div>
+                )}
+              </div>
+            )}
+            {!cmpMode && (
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <h2 style={{ marginBottom: 0 }}>Country: {countryData.name} ({countryData.code})</h2>
+                <button onClick={toggleCountryInfo} style={{ padding: 0, paddingRight: 1, paddingLeft: 1, border: 'none' }}>&#9432;</button>
+              </div>
+            )}
           </div>
           <CountryInfo showInfo={showCountryInfo} countryData={countryData} />
 
-          <p>Indicator Value: {country.value}</p>
-
-          <PanelForm country={country} isOpen={isOpen} setChartData={setChartData} fetchCountryData={fetchCountryData} />
+          {!cmpMode && (
+            <PanelForm country={country} isOpen={isOpen} setChartData={setChartData} fetchCountryData={fetchCountryData} />
+          )}
+          {cmpMode && !countryCmpData && (
+            <p>Select another country</p>
+          )}
           <Line style={{ color: 'lightblue' }} ref={chartRef} data={chartData} options={options} />
         </div >
       )}

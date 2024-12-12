@@ -8,8 +8,8 @@ const IndicatorsInfo = ({ showInfo, indicators }) => {
           <div style={{ width: '100%' }} key={i}>
             <span style={{ display: 'inline-block', width: "100px" }}>{indicator.id}: </span>
             <span>{indicator.name}</span>
-            <div class="ind-tooltip"> &#9432;
-              <span class="ind-tooltiptext">{indicator.description}</span>
+            <div className="ind-tooltip"> &#9432;
+              <span className="ind-tooltiptext">{indicator.description}</span>
             </div>
           </div>
         ))}

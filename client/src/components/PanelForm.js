@@ -207,9 +207,13 @@ const PanelForm = ({ country, isOpen, setChartData, fetchCountryData }) => {
 
   useEffect(() => {
     if (country && isOpen) {
+      const fetchNormalData = async () => {
+        let cData = await fetchCountryData();
+        setChartData(cData);
+      }
       switch (panelFormState) {
         case panelState.normal:
-          fetchCountryData();
+          fetchNormalData();
           break;
         case panelState.predict:
           fetchPredict();
