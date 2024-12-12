@@ -39,6 +39,18 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
     return true;
   };
 
+  const handleSingleSliderChange = () => {
+    const newDateBeg = dateBegRef.current.value;
+    setCurrentDateBeg(newDateBeg);
+    setDateBeg(newDateBeg);
+    setDateEnd(newDateBeg);
+  }
+
+  const handleIndicatorChange = () => {
+    const newIndicator = indicatorRef.current.value;
+    setIndicator(newIndicator);
+  }
+
   return (
     <form onSubmit={handleSubmit}>
       <button type="button" onClick={() => setSingleSlider(!singleSlider)}>
@@ -53,7 +65,7 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
           defaultValue={dateBeg}
           min="1960"
           max="2023"
-          onChange={() => setCurrentDateBeg(dateBegRef.current.value)}
+          onChange={singleSlider ? handleSingleSliderChange : () => setCurrentDateBeg(dateBegRef.current.value)}
         />
         <span>Begin year: {currentDateBeg}</span>
       </label>
@@ -75,13 +87,12 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
       )}
       <div id="Indicator">
         Indicator:
-        <select ref={indicatorRef} defaultValue={indicator} id="dropdown"
-        >
+        <select ref={indicatorRef} defaultValue={indicator} id="dropdown" onChange={singleSlider ? handleIndicatorChange : null}>
           <option value="gdp">GDP</option>
           <option value="ur">Unemployment Rate</option>
           <option value="cpi">Inflation Rate (CPI)</option>
         </select>
-        <input type="submit" value="Submit" />
+        {!singleSlider && <input type="submit" value="Submit" />}
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 

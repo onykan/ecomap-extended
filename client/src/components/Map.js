@@ -10,49 +10,55 @@ import '../styles/Map.css';
 const geoUrl =
   "https://raw.githubusercontent.com/lotusms/world-map-data/main/world.json";
 
-const Map = ({ dateBeg, dateEnd, indicator, countryNames }) => {
+const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiData }) => {
   const [data, setData] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [tooltipContent, setTooltipContent] = useState("");
   const [yearIsSame, setYearIsSame] = useState(false);
 
-  // Fetch data from api
+  // Fetch data from api or use pre-fetched data
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const url = dateBeg === dateEnd
-          ? `/api/datalayer/${indicator}?dateBeg=${dateBeg}&dateEnd=${dateEnd}`
-          : `/api/datalayer/${indicator}aapc?dateBeg=${dateBeg}&dateEnd=${dateEnd}`;
-        const result = await axios.get(url);
-        setData(result.data);
-        console.log("Data fetched:", result.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
-    setYearIsSame(dateBeg === dateEnd);
+      if (dateBeg === dateEnd) {
+        setYearIsSame(true);
+        switch (indicator) {
+          case 'gdp':
+            console.log("gdpdata", gdpData);
+            setData(gdpData);
+            break;
+          case 'ur':
+            setData(urData);
+            break;
+          case 'cpi':
+            setData(cpiData);
+            break;
+          default:
+            setData([]);
+        }
+      } else {
+        setYearIsSame(false);
+        const fetchData = async () => {
+        try {
+          const url = `/api/datalayer/${indicator}aapc?dateBeg=${dateBeg}&dateEnd=${dateEnd}`;
+          const result = await axios.get(url);
+          setData(result.data);
+          console.log("Data fetched:", result.data);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      };
+    fetchData(); 
+  }
+  console.log({ data });  
   }, [dateBeg, dateEnd, indicator]);
 
-  // Define color scales for each indicator
-  /*
-  const colorScales = {
-    gdp: scaleLinear().domain([-8, 0, 8]).range(["red", "white", "green"]),
-    ur: scaleLinear().domain([10, 0, -2]).range(["red", "white", "green"]).clamp(true),
-    cpi: scaleLinear().domain([-2, 0, 2, 4, 7]).range(["red", "white", "green", "white", "red"]),
-    //if (yearIsSame) we need to use different color scale
-    gdpC: scaleLinear().domain([0, 100000000000, 500000000000]).range(["red", "white", "green"]).clamp(true),
-    //TODO fix color scale for urC and cpiC
-    urC: scaleLinear().domain([3, 7, 15]).range(["green", "white", "red"]),
-    cpiC: scaleLinear().domain([-1, 1]).range(["white", "white"]),
-  };
-  */
+
+  // Color scales for different indicators
   const colorScales = {
     gdp: {
       stops: [-8, 0, 8],
       colors: ["red", "white", "green"],
-      clamp: false
+      clamp: true
     },
     ur: {
       stops: [-2, 0, 10],
@@ -62,28 +68,30 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames }) => {
     cpi: {
       stops: [-2, 0, 2, 4, 7],
       colors: ["red", "white", "green", "white", "red"],
-      clamp: false
+      clamp: true
     },
     gdpC: {
       stops: [0, 100000000000, 500000000000],
       colors: ["red", "white", "green"],
       clamp: true
     },
-    urC: { //TODO fix color scale for urC and cpiC
+    urC: { 
       stops: [3, 7, 15],
       colors: ["green", "white", "red"],
-      clamp: false
+      clamp: true
     },
+    //TODO fix color scale for cpiC
     cpiC: {
       stops: [-1, 1],
       colors: ["white", "white"],
-      clamp: false
+      clamp: true
     }
   }
 
   // choose color for the country
   const getCountryColor = (countryCode) => {
     const countryData = data[countryCode];
+    
     if (!countryData) return "#888";
     const value = yearIsSame ? countryData[dateBeg] : countryData;
     if (value === null) return "#EEE";

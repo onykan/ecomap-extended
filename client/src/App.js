@@ -13,6 +13,9 @@ const App = () => {
   const [indicators, setIndicators] = useState([]);
   const [indicatorsInfoOpen, setIndInfoVisible] = useState(false);
   const [countryNames, setCountryNames] = useState({});
+  const [gdpData, setGdpData] = useState({});
+  const [urData, setUrData] = useState({});
+  const [cpiData, setCpiData] = useState({});
 
   useEffect(() => {
     const fetchCountryNames = async () => {
@@ -32,9 +35,46 @@ const App = () => {
         console.error("Error fetching indicators:", error);
       }
     };
+    const fetchGDP = async () => {
+      try {
+        const url = `/api/datalayer/gdp?dateBeg=1960&dateEnd=2023`
+        const result = await axios.get(url);
+        setGdpData(result.data);
+        console.log("GDP data fetched:", result.data);
+      } catch (error) {
+        console.error("Error fetching GDP data:", error);
+      }
+    };
+    const fetchUR = async () => {
+      try {
+        const url = `/api/datalayer/ur?dateBeg=1960&dateEnd=2023`
+        const result = await axios.get(url);
+        setUrData(result.data);
+        console.log("ur data fetched:", result.data);
+      } catch (error) {
+        console.error("Error fetching ur data:", error);
+      }
+    };
+    const fetchCPI = async () => {
+      try {
+        const url = `/api/datalayer/cpi?dateBeg=1960&dateEnd=2023`
+        const result = await axios.get(url);
+        setCpiData(result.data);
+        console.log("cpi data fetched:", result.data);
+      } catch (error) {
+        console.error("Error fetching cpi data:", error);
+      }
+    };
+
+    const fetchData = async () => {
     fetchCountryNames();
     fetchIndicators();
-  }, []);
+    await fetchGDP();
+    await fetchUR();  
+    await fetchCPI();
+  };
+  fetchData();
+ }, []);
 
   return (
     <div >
@@ -75,6 +115,9 @@ const App = () => {
         dateEnd={dateEnd}
         indicator={indicator}
         countryNames={countryNames}
+        gdpData={gdpData}
+        urData={urData}
+        cpiData={cpiData}
       />
     </div >
   );
