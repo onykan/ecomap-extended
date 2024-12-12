@@ -391,11 +391,12 @@ async function fetchDataApi(url, params = "") {
   const res = await fetchData(url, new URLSearchParams({ format: "json", per_page: maxPerPage }).toString() + "&" + params);
   if (res.length == 1) return res[0];
   let data = res[1];
+  let pages = res[0]['pages'];
 
-  if (res[0].pages > 1) {
-    for (let page = 2; page <= res[0].pages; page++) {
+  if (pages > 1) {
+    for (let page = 2; page <= pages; page++) {
       const r = await fetchData(url, new URLSearchParams({ format: "json", per_page: maxPerPage, page: page }).toString());
-      data.concat(r[1]);
+      data = data.concat(r[1]);
     }
   }
   return (data && data.length == 1) ? data[0] : data;

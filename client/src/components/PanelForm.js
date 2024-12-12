@@ -260,7 +260,7 @@ const PanelForm = ({ country, isOpen, setChartData, fetchCountryData }) => {
       {panelFormState === panelState.predict && (
         <form onSubmit={handlePredictSubmit} style={styles.form}>
           <div style={styles.formGroup}>
-            <label for="data_len">Prediction data length:</label>
+            <label htmlFor="data_len">Prediction data length:</label>
             <input
               style={styles.input}
               type="number"
@@ -273,7 +273,7 @@ const PanelForm = ({ country, isOpen, setChartData, fetchCountryData }) => {
             />
           </div>
           <div style={styles.formGroup}>
-            <label for="predict_years">Predicted years:</label>
+            <label htmlFor="predict_years">Predicted years:</label>
             <input
               style={styles.input}
               type="number"
