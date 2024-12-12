@@ -10,7 +10,7 @@ import '../styles/Map.css';
 const geoUrl =
   "https://raw.githubusercontent.com/lotusms/world-map-data/main/world.json";
 
-const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiData }) => {
+const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiData, indicatorCount }) => {
   const [data, setData] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -19,25 +19,25 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
 
   // Fetch data from api or use pre-fetched data
   useEffect(() => {
-      if (dateBeg === dateEnd) {
-        setYearIsSame(true);
-        switch (indicator) {
-          case 'gdp':
-            console.log("gdpdata", gdpData);
-            setData(gdpData);
-            break;
-          case 'ur':
-            setData(urData);
-            break;
-          case 'cpi':
-            setData(cpiData);
-            break;
-          default:
-            setData([]);
-        }
-      } else {
-        setYearIsSame(false);
-        const fetchData = async () => {
+    if (dateBeg === dateEnd) {
+      setYearIsSame(true);
+      switch (indicator) {
+        case 'gdp':
+          console.log("gdpdata", gdpData);
+          setData(gdpData);
+          break;
+        case 'ur':
+          setData(urData);
+          break;
+        case 'cpi':
+          setData(cpiData);
+          break;
+        default:
+          setData([]);
+      }
+    } else {
+      setYearIsSame(false);
+      const fetchData = async () => {
         try {
           const url = `/api/datalayer/${indicator}aapc?dateBeg=${dateBeg}&dateEnd=${dateEnd}`;
           const result = await axios.get(url);
@@ -47,9 +47,9 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
           console.error("Error fetching data:", error);
         }
       };
-    fetchData(); 
-  }
-  console.log({ data });  
+      fetchData();
+    }
+    console.log({ data });
   }, [dateBeg, dateEnd, indicator]);
 
 
@@ -75,7 +75,7 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
       colors: ["red", "white", "green"],
       clamp: true
     },
-    urC: { 
+    urC: {
       stops: [3, 7, 15],
       colors: ["green", "white", "red"],
       clamp: true
@@ -91,7 +91,7 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
   // choose color for the country
   const getCountryColor = (countryCode) => {
     const countryData = data[countryCode];
-    
+
     if (!countryData) return "#888";
     const value = yearIsSame ? countryData[dateBeg] : countryData;
     if (value === null) return "#EEE";
@@ -206,7 +206,7 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
       </ComposableMap>
       <Tooltip id="tip" float={true} />
 
-      <CountryPanel country={selectedCountry} isOpen={isPanelOpen} onClose={closePanel} />
+      <CountryPanel country={selectedCountry} isOpen={isPanelOpen} onClose={closePanel} indicatorCount={indicatorCount} />
     </div>
   );
 };

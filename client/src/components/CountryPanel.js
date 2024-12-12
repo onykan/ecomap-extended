@@ -19,9 +19,7 @@ ChartJS.register(
   zoomPlugin
 );
 
-const INDICATOR_COUNT = 7;
-
-const CountryPanel = ({ country, isOpen, onClose }) => {
+const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
   const chartRef = useRef(null);
   const [initCountry, setInitCountry] = useState(null);
   const [countryData, setCountryData] = useState([]);
@@ -186,7 +184,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
             legend.chart.data.datasets.forEach((dataset, i) => {
               if (!indexes.includes(i)) {
-                if (i >= INDICATOR_COUNT) {
+                if (i >= indicatorCount) {
                   dataset.borderColor = 'rgba(255,0,0,1)';
                   legend.chart.getDatasetMeta(i).hidden = true;
                 } else {
@@ -218,7 +216,7 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
               });
               return chart.data.datasets.map(
                 (dataset, i) => {
-                  if (i >= INDICATOR_COUNT) {
+                  if (i >= indicatorCount) {
                     return {
                       text: dataset.label,
                       strokeStyle: dataset.borderColor,

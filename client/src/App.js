@@ -67,14 +67,14 @@ const App = () => {
     };
 
     const fetchData = async () => {
-    fetchCountryNames();
-    fetchIndicators();
-    await fetchGDP();
-    await fetchUR();  
-    await fetchCPI();
-  };
-  fetchData();
- }, []);
+      fetchCountryNames();
+      fetchIndicators();
+      await fetchGDP();
+      await fetchUR();
+      await fetchCPI();
+    };
+    fetchData();
+  }, []);
 
   return (
     <div >
@@ -118,6 +118,7 @@ const App = () => {
         gdpData={gdpData}
         urData={urData}
         cpiData={cpiData}
+        indicatorCount={indicators.length}
       />
     </div >
   );
