@@ -92,11 +92,11 @@ const datalayers = {
     indicator: "GDP",
     formator: aapcFormator
   },
-  gdp: {
+  gdppc: {
     indicator: "GDPPC",
     formator: undefined
   },
-  gdp: {
+  gdpusdpc: {
     indicator: "GDPUSDPC",
     formator: undefined
   },
