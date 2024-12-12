@@ -23,6 +23,7 @@ const INDICATOR_COUNT = 7;
 
 const CountryPanel = ({ country, isOpen, onClose }) => {
   const chartRef = useRef(null);
+  const [initCountry, setInitCountry] = useState(null);
   const [countryData, setCountryData] = useState([]);
   const [countryCmpData, setCountryCmpData] = useState(null);
   const [cmpMode, setCmpMode] = useState(false);
@@ -60,19 +61,23 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (country && isOpen) {
-        console.log(country);
+        if (!initCountry) {
+          setInitCountry(country.code);
+        }
         if (cmpMode && !countryCmpData) {
+          if (country.code == countryData['code']) return;
           let cData = await fetchCountryData(country.code, setCountryCmpData);
           appendToChart(cData);
         }
         else if (cmpMode) {
+          if (country.code == countryData['code']) return;
           let cData = await fetchCountryData(countryData['code'], setCountryData);
           let cDataCmp = await fetchCountryData(country.code, setCountryCmpData);
           await Promise.all([cData, cDataCmp]);
           combineChartData(cData, cDataCmp);
         }
         else {
-          let cData = await fetchCountryData(country.code, setCountryData);
+          let cData = await fetchCountryData(initCountry || country.code, setCountryData);
           setChartData(cData);
         }
       }
@@ -92,19 +97,19 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
   useEffect(() => {
     if (country && isOpen) {
       const fetchData = async () => {
-        let cData = await fetchCountryData(countryData['code']);
-        setChartData(cData);
+        country = { code: countryData['code'] };
+        // let cData = await fetchCountryData(country.code, setCountryData);
+        // setChartData(cData);
       }
       if (cmpMode) {
       } else {
-        console.log("opts", options);
         setCountryCmpData(null);
         fetchData();
       }
     }
   }, [cmpMode]);
 
-  const fetchCountryData = async (countryCode = country.code, setCountryDataFunc = setCountryData) => {
+  const fetchCountryData = async (countryCode = initCountry || country.code, setCountryDataFunc = setCountryData) => {
     // chartRef.current.resetZoom();
     try {
       // Fix for Djibouti
@@ -313,8 +318,17 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
 
       {isOpen && chartData && (
         <div>
-          <button onClick={() => { setCountryInfo(false); setCmpMode(false); onClose(); }} style={{ float: "right" }}>Close</button>
-          <button onClick={() => { setCmpMode(!cmpMode); }} style={{ float: "right" }}>Compare</button>
+          <button onClick={() => {
+            setCountryInfo(false);
+            setCmpMode(false);
+            setInitCountry(null);
+            onClose();
+          }} style={{ float: "right" }}>Close</button>
+          <button onClick={() => { setCmpMode(!cmpMode); }}
+            style={{
+              float: "right", boxShadow: (cmpMode) ? "inset 1px 2px 5px #777" : "",
+              transform: (cmpMode) ? "translateY(1px)" : ""
+            }}>Compare</button>
           <div >
             {cmpMode && (
               <div style={{ display: "flex", flexDirection: "column" }}>
