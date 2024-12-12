@@ -62,7 +62,10 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
         if (!initCountry) {
           setInitCountry(country.code);
         }
-        if (cmpMode && !countryCmpData) {
+        else if (initCountry && !cmpMode) {
+          setInitCountry(country.code);
+        }
+        else if (cmpMode && !countryCmpData) {
           if (country.code == countryData['code']) return;
           let cData = await fetchCountryData(country.code, setCountryCmpData);
           appendToChart(cData);
