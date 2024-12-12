@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 // Serve our static build files
 app.use(express.static(path.join(__dirname, '../client/build')));
-// Provides great rout logging in our console for debugging
+// Route logging
 app.use(morgan('dev'));
 
 const apiRouter = require('./controllers/api');
@@ -37,7 +37,6 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, `../client/${PROD ? 'build' : 'public'}/index.html`));
 });
 
-//Serving react on routes unused by previous routing
 app.get('*', (req, res) => {
     res.status(404);
     res.send("Not found");

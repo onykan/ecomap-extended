@@ -97,11 +97,10 @@ const CountryPanel = ({ country, isOpen, onClose }) => {
   useEffect(() => {
     if (country && isOpen) {
       const fetchData = async () => {
-        country = { code: countryData['code'] };
-        // let cData = await fetchCountryData(country.code, setCountryData);
-        // setChartData(cData);
+        country = { code: initCountry };
       }
       if (cmpMode) {
+        setCountryInfo(false);
       } else {
         setCountryCmpData(null);
         fetchData();

@@ -1,6 +1,5 @@
 const { isNumeric } = require("./utils.js");
 
-
 function convertYear(year) {
   return Number(year);
 }

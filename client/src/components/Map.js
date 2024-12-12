@@ -157,7 +157,7 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
       }
       }
     >
-      <div style={{position: "absolute"}}>
+      <div style={{ position: "absolute" }}>
         <MapLegend
           id="maplegend"
           stops={getGradientStops()}

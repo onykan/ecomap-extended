@@ -3,6 +3,7 @@ function isNumeric(n) {
   return Number(parseFloat(n)) == n;
 }
 
+// Compresses quarterly data to yearly by merging
 function compressToYearly(data) {
   if (!data) return {};
   const result = {};
