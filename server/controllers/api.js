@@ -29,6 +29,20 @@ const indicators =
       frequency: Frequency.Yearly
     },
     {
+      code: 'NY.GDP.PCAP.KD',
+      name: 'Gross domestic product',
+      description: 'Gross domestic product per capita, adjusted for inflation (US$)',
+      id: 'GDPPC',
+      frequency: Frequency.Yearly
+    },
+    {
+      code: 'NY.GDP.PCAP.CD',
+      name: 'Gross domestic product per capita',
+      description: 'Gross domestic product per capita, not adjusted for inflation (US$)',
+      id: 'GDPUSDPC',
+      frequency: Frequency.Yearly
+    },
+    {
       code: 'SL.UEM.TOTL.ZS',
       name: 'Unemployment Rate',
       description: 'Unemployment, total (% of total labor force)',
@@ -77,6 +91,14 @@ const datalayers = {
   gdpaapc: {
     indicator: "GDP",
     formator: aapcFormator
+  },
+  gdp: {
+    indicator: "GDPPC",
+    formator: undefined
+  },
+  gdp: {
+    indicator: "GDPUSDPC",
+    formator: undefined
   },
   ur: {
     indicator: "UR",
