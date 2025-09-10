@@ -77,38 +77,40 @@ const App = () => {
   }, []);
 
   return (
-    <div >
+    <div id="main">
       <div id="wideTopbar">
-        <div id="topbar">
+        
+          
+          <div id="indicatorForm">
+            <IndicatorForm
+              id="indicatorform"
+              dateBeg={dateBeg}
+              dateEnd={dateEnd}
+              indicator={indicator}
+              setDateBeg={setDateBeg}
+              setDateEnd={setDateEnd}
+              setIndicator={setIndicator}
+            />
+          </div>
+          <div id="indicatorsInfo">
+            <button onClick={() => { setIndInfoVisible(!indicatorsInfoOpen) }} style={{ padding: 3, width: "100px" }}>Indicators</button>
+            <IndicatorsInfo showInfo={indicatorsInfoOpen} indicators={indicators} />
+          </div>
           <div id="Title">
             <h1>World EcoMap</h1>
             <p>This map shows the selected indicator for each country. The color of a country corresponds to the value of the indicator.
               You can select the indicator and the year range to display.</p>
             <p>The data used in this project is sourced from the World Bank Open Data platform. For more information, visit <a href='https://data.worldbank.org'>World Bank Open Data</a>.</p>
-          </div>
-          <IndicatorForm
-            id="indicatorform"
-            dateBeg={dateBeg}
-            dateEnd={dateEnd}
-            indicator={indicator}
-            setDateBeg={setDateBeg}
-            setDateEnd={setDateEnd}
-            setIndicator={setIndicator}
-          />
-        </div>
-        <div id='Help'>
-          <div style={{ display: "block", position: "relative", width: "40%", minWidth: "20em" }}>
-            <button onClick={() => { setIndInfoVisible(!indicatorsInfoOpen) }} style={{ padding: 3, width: "100px" }}>Indicators</button>
-            <IndicatorsInfo showInfo={indicatorsInfoOpen} indicators={indicators} />
-          </div>
-          <div style={{ borderLeft: '1px solid lightblue', paddingLeft: '2em' }}>
             <h2>Help</h2>
             <p>Choose a start and end year to see the percentual change of data in the assigned years. </p>
             <p>Using only one year gives the absolute value of chosen indicator for the chosen year. </p>
             <p>Click a country to see detailed information about the chosen country. </p>
           </div>
+          
+        
+        
 
-        </div>
+
       </div >
       <Map
         dateBeg={dateBeg}
@@ -125,3 +127,14 @@ const App = () => {
 }
 
 export default App;
+
+/*
+<div id="topbar">
+<div id='Help'>
+          
+<div style={{ paddingLeft: '2em' }}>
+            
+          </div>
+        </div>
+        </div>
+*/

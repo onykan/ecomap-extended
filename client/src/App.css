@@ -35,21 +35,73 @@ a {
   color: lightblue;
 }
 
-#Title {
-  font-size: 1em;
-  margin: 10px;
-  margin: 0 ;
-  border-right: 1px solid lightblue;
-  margin-bottom: 10px;
-  margin-left: 10px;
-  padding : 10px;
+#map {
+  display: flex;
+  flex-flow: wrap;
+  align-content: center;
+  flex-grow: 1;
 }
 
-#wideTopbar {
+#Title {
+  font-size: 1em;
+  /*border-right: 1px solid lightblue;*/
+  margin-left: 10px;
+  padding : 10px;
+  overflow-y: scroll;
+}
+
+#main {
   display: flex;
-  flex-direction: row;
-  width: 100%;
-  border-bottom: 1px solid lightblue;
+  flex-direction: column-reverse;
+  height: 97vh;
+}
+
+@media (max-aspect-ratio: 3/4) {
+  #wideTopbar {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 60vh;
+    margin-top: 8px;
+    flex-flow: wrap;
+  }
+
+  #wideTopbar > div:not(:last-child) {
+    border-bottom: 1px solid lightblue;
+  }
+}
+
+@media not (max-aspect-ratio: 3/4) {
+  #wideTopbar {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-height: 30vh;
+    margin-top: 8px;
+  }
+
+  #wideTopbar > div {
+    border-right: 1px solid lightblue;
+  }
+}
+
+#indicatorForm {
+  flex-basis: 20%;
+  flex-grow: 1;
+  min-width: 11em;
+}
+
+#indicatorsInfo {
+  display: block;
+  position: relative;
+  padding: 10px;
+  min-width: 20em;
+  flex-basis: 40%;
+  flex-grow: 1
+}
+
+#indicatorsInfo > div > div:nth-child(even) {
+  color: lightblue;
 }
 
 #Help {
@@ -61,6 +113,7 @@ a {
   padding-left:30px;
   border-left: 1px solid lightblue;
 }
+
 h2 {
   margin-top: 0;
 }
@@ -98,7 +151,7 @@ h2 {
 .ind-tooltip {
   position: relative;
   display: inline-block;
-  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .ind-tooltip .ind-tooltiptext {
@@ -111,6 +164,8 @@ h2 {
   padding: 5px 0;
   position: absolute;
   z-index: 1;
+  bottom: 1.2em;
+  left: 1.2em;
 }
 
 .ind-tooltip:hover .ind-tooltiptext {

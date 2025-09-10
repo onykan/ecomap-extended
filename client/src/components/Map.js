@@ -147,9 +147,9 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
 
   return (
     <div
+      id="map"
       style={{
         position: "relative",
-        height: "30%",
         overflow: "hidden",
         width: isPanelOpen ? "58%" : "100%",
         transition: "width 0.3s ease",
@@ -169,7 +169,7 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
       >
         <ZoomableGroup
           center={[0, 0]}
-          minZoom={1}
+          minZoom={0.5}
           maxZoom={5}
           translateExtent={[
             [-500, -300], // Top-left corner

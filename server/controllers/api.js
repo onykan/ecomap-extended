@@ -1,3 +1,4 @@
+const { json } = require("express");
 const { predict_data, linearRegressionPredict, linearRegressionPredictPast, get_regressor, r2_score, linearRegressionFit } = require("../utils/predict.js");
 const { isNumeric, compressToYearly } = require("../utils/utils.js");
 
@@ -404,7 +405,7 @@ async function fetchData(url, params = "") {
     return data;
   } catch (error) {
     console.error('Error:', error);
-    return null;
+    return JSON.parse({});
   }
 }
 

@@ -28,7 +28,8 @@ form {
     border-radius: 10px;
     background-color: #282c34;
     color: white;
-    width: 20em;
+    /*width: 20em;*/
+    /*TODO: Consider moving to index.css*/
     
   }
 
