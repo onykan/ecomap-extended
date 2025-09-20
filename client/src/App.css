@@ -37,9 +37,47 @@ a {
 
 #map {
   display: flex;
-  flex-flow: wrap;
-  align-content: center;
+  flex-direction: row;
+  flex-basis: 100vw;
+  align-items: center;
   flex-grow: 1;
+}
+
+#mapcontainer {
+  display: flex;
+  min-width: min-content;
+  min-height: 100%;
+  flex-grow: 1;
+}
+
+#topbar {
+  display: flex;
+  flex-direction: row;
+  width: 58%;
+}
+
+#maplegend {
+  margin: 0.5em;
+  flex-grow: 1;
+  width: 10em;
+}
+
+#maplegendInner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+#maplegendNumbers {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#maplegendGradient {
+  max-height: 3vh;
+  margin: 0.5em;
+  overflow: hidden;
 }
 
 #Title {
@@ -69,6 +107,22 @@ a {
   #wideTopbar > div:not(:last-child) {
     border-bottom: 1px solid lightblue;
   }
+
+  .sidebarCollapsed {
+    right: 0px;
+    bottom: 0px;
+    height: 58vh;
+    width: 0px;
+  }
+
+  .sidebarExpanded {
+    right: 0px;
+    bottom: 0px;
+    height: 58vh;
+    width: calc(100% - 40px);
+    overflow-x: hidden;
+    overflow-y: scroll;
+  }
 }
 
 @media not (max-aspect-ratio: 3/4) {
@@ -82,6 +136,22 @@ a {
 
   #wideTopbar > div {
     border-right: 1px solid lightblue;
+  }
+
+  .sidebarCollapsed {
+    right: 0px;
+    top: 0px;
+    height: 100%;
+    width: 0px;
+  }
+
+  .sidebarExpanded {
+    right: 0px;
+    top: 0px;
+    height: 100%;
+    width: 40%;
+    overflow-x: hidden;
+    overflow-y: scroll;
   }
 }
 
@@ -152,6 +222,7 @@ h2 {
   position: relative;
   display: inline-block;
   padding-right: 5px;
+  cursor: help;
 }
 
 .ind-tooltip .ind-tooltiptext {

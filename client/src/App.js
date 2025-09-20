@@ -79,8 +79,6 @@ const App = () => {
   return (
     <div id="main">
       <div id="wideTopbar">
-        
-          
           <div id="indicatorForm">
             <IndicatorForm
               id="indicatorform"
@@ -106,11 +104,6 @@ const App = () => {
             <p>Using only one year gives the absolute value of chosen indicator for the chosen year. </p>
             <p>Click a country to see detailed information about the chosen country. </p>
           </div>
-          
-        
-        
-
-
       </div >
       <Map
         dateBeg={dateBeg}

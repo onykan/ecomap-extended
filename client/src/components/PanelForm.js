@@ -62,141 +62,157 @@ const PanelForm = ({ country, isOpen, setChartData, fetchCountryData }) => {
 
 
   const fetchPredict = (years = predictYears) => {
-    try {
-      axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
-        predict: years,
-        predict_data_len: predictDataLen,
-        compress: "y",
-      })).then((response) => {
-        let predict = response.data[country.code].predict;
-        let indData = response.data[country.code].indicators;
+    axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
+      predict: years,
+      predict_data_len: predictDataLen,
+      compress: "y",
+    })).then((response) => {
+      let predict = response.data[country.code].predict;
+      let indData = response.data[country.code].indicators;
 
-        // Removes null indicators
-        indData = Object.fromEntries(
-          Object.entries(indData).filter(([key]) => indData[key] != null)
-        );
-        predict = Object.fromEntries(
-          Object.entries(predict).filter(([key]) => predict[key] != null)
-        );
+      // Removes null indicators
+      indData = Object.fromEntries(
+        Object.entries(indData).filter(([key]) => indData[key] != null)
+      );
+      predict = Object.fromEntries(
+        Object.entries(predict).filter(([key]) => predict[key] != null)
+      );
 
-        const labelsData = Object.keys(indData.GDP).map(e => Number(e));
-        const max_year = Math.max(...labelsData) + 1;
-        labelsData.push(max_year);
-        const datasetsData = Object.keys(indData).map((key) => {
-          const dataset = {
-            label: key,
-            data: Object.entries(indData[key])
-              .map(([k, val]) => ({ x: Number(k), y: val })),
-            borderColor: 'rgba(0,0,0,1)',
-            usePointStyle: true,
-            pointRadius: 0,
-            hidden: true,
-            hitRadius: 10,
-            scale: 'y',
-          };
-          return dataset;
-        });
-
-        if (years <= 0) {
-          setChartData({
-            labels: labelsData,
-            datasets: datasetsData,
-          })
-          return;
-        }
-
-        let labels = [];
-        for (let i = 1; i <= years; i++) {
-          labels.push(max_year + i);
-        }
-        const datasets = Object.keys(predict).map((key) => {
-          let dataset = {
-            label: key,
-            data: [],
-            borderColor: 'rgba(255,0,0,1)',
-            usePointStyle: true,
-            pointRadius: 0,
-            hidden: true,
-            hitRadius: 10,
-            scale: 'y',
-          };
-
-          const maxYearForInd = Math.max(...Object.keys(indData[key]).map(Number));
-          dataset.data.push({ x: maxYearForInd, y: indData[key][maxYearForInd] });
-          Object.entries(predict[key]).forEach(([k, val]) => {
-            dataset.data.push({ x: Number(k), y: val });
-          })
-          return dataset;
-        }
-        );
-        setPredictData({
-          labels: labels,
-          datasets: datasets,
-        })
-        let updatedLabels = [...labelsData];
-        let updatedDatasets = [...datasetsData];
-        labels.forEach(e => { updatedLabels.push(e) });
-        datasets.forEach(e => { updatedDatasets.push(e) });
-
-        setChartData({ labels: Array.from(new Set(updatedLabels.map(Number))).sort((a, b) => a - b), datasets: updatedDatasets });
+      const labelsData = Object.keys(indData.GDP).map(e => Number(e));
+      const max_year = Math.max(...labelsData) + 1;
+      labelsData.push(max_year);
+      const datasetsData = Object.keys(indData).map((key) => {
+        const dataset = {
+          label: key,
+          data: Object.entries(indData[key])
+            .map(([k, val]) => ({ x: Number(k), y: val })),
+          borderColor: 'rgba(0,0,0,1)',
+          usePointStyle: true,
+          pointRadius: 0,
+          hidden: true,
+          hitRadius: 10,
+          scale: 'y',
+        };
+        return dataset;
       });
-    } catch (error) {
+
+      if (years <= 0) {
+        setChartData({
+          labels: labelsData,
+          datasets: datasetsData,
+        })
+        return;
+      }
+
+      let labels = [];
+      for (let i = 1; i <= years; i++) {
+        labels.push(max_year + i);
+      }
+      const datasets = Object.keys(predict).map((key) => {
+        let dataset = {
+          label: key,
+          data: [],
+          borderColor: 'rgba(255,0,0,1)',
+          usePointStyle: true,
+          pointRadius: 0,
+          hidden: true,
+          hitRadius: 10,
+          scale: 'y',
+        };
+
+        const maxYearForInd = Math.max(...Object.keys(indData[key]).map(Number));
+        dataset.data.push({ x: maxYearForInd, y: indData[key][maxYearForInd] });
+        Object.entries(predict[key]).forEach(([k, val]) => {
+          dataset.data.push({ x: Number(k), y: val });
+        })
+        return dataset;
+      }
+      );
+      setPredictData({
+        labels: labels,
+        datasets: datasets,
+      })
+      let updatedLabels = [...labelsData];
+      let updatedDatasets = [...datasetsData];
+      labels.forEach(e => { updatedLabels.push(e) });
+      datasets.forEach(e => { updatedDatasets.push(e) });
+
+      setChartData({ labels: Array.from(new Set(updatedLabels.map(Number))).sort((a, b) => a - b), datasets: updatedDatasets });
+    }).catch(function (error) {
       console.error("Error fetching predict data:", error);
-    }
+      return {
+        labels: [0, 0, 0],
+        datasets: [
+          {
+            label: 'Error fetching data',
+            data: [0, 0, 0],
+            borderColor: 'rgba(0,0,0,1)',
+          }
+        ]
+      }
+    })
   }
 
   const linearRegFit = () => {
-    try {
-      axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
-        fit: "y",
-        compress: "y",
-      })).then((response) => {
-        const fit_data = response.data[country.code].fit
-        const indData = response.data[country.code].indicators;
+    axios.get(`/api/country/${country.code}/data?` + new URLSearchParams({
+      fit: "y",
+      compress: "y",
+    })).then((response) => {
+      const fit_data = response.data[country.code].fit
+      const indData = response.data[country.code].indicators;
 
-        let r2Scores = [];
-        const labels = Object.keys(indData.GDP).map(e => Number(e));
-        const max_year = Math.max(...labels);
-        labels.push(max_year + 1);
-        let datasets = [];
-        Object.keys(indData).forEach((key) => {
-          datasets.push({
-            label: key,
-            data: Object.keys(indData[key]).reduce((dataset, k) => {
-              dataset.push({ x: Number(k), y: indData[key][k] });
-              return dataset;
-            }, []),
-            borderColor: 'rgba(0,0,0,1)',
-            usePointStyle: true,
-            pointRadius: 0,
-            hidden: true,
-            hitRadius: 10,
-            scale: 'y',
-          });
+      let r2Scores = [];
+      const labels = Object.keys(indData.GDP).map(e => Number(e));
+      const max_year = Math.max(...labels);
+      labels.push(max_year + 1);
+      let datasets = [];
+      Object.keys(indData).forEach((key) => {
+        datasets.push({
+          label: key,
+          data: Object.keys(indData[key]).reduce((dataset, k) => {
+            dataset.push({ x: Number(k), y: indData[key][k] });
+            return dataset;
+          }, []),
+          borderColor: 'rgba(0,0,0,1)',
+          usePointStyle: true,
+          pointRadius: 0,
+          hidden: true,
+          hitRadius: 10,
+          scale: 'y',
         });
-        Object.keys(fit_data).forEach((key) => {
-          datasets.push({
-            label: key,
-            data: Object.keys(fit_data[key].y_hat).reduce((dataset, k) => {
-              dataset.push({ x: Number(fit_data[key].x[k]), y: fit_data[key].y_hat[k] });
-              return dataset;
-            }, []),
-            borderColor: 'rgba(255,0,0,1)',
-            usePointStyle: true,
-            pointRadius: 0,
-            hidden: true,
-            hitRadius: 10,
-            scale: 'y',
-          });
-          r2Scores.push([key, fit_data[key].r2]);
-        });
-
-        setR2Scores(r2Scores);
-        setChartData({ labels: labels, datasets: datasets });
       });
-    } catch (error) {
+      Object.keys(fit_data).forEach((key) => {
+        datasets.push({
+          label: key,
+          data: Object.keys(fit_data[key].y_hat).reduce((dataset, k) => {
+            dataset.push({ x: Number(fit_data[key].x[k]), y: fit_data[key].y_hat[k] });
+            return dataset;
+          }, []),
+          borderColor: 'rgba(255,0,0,1)',
+          usePointStyle: true,
+          pointRadius: 0,
+          hidden: true,
+          hitRadius: 10,
+          scale: 'y',
+        });
+        r2Scores.push([key, fit_data[key].r2]);
+      });
+
+      setR2Scores(r2Scores);
+      setChartData({ labels: labels, datasets: datasets });
+    }).catch(function (error) {
       console.error("Error fetching predict data:", error);
-    }
+      return {
+        labels: [0, 0, 0],
+        datasets: [
+          {
+            label: 'Error fetching data',
+            data: [0, 0, 0],
+            borderColor: 'rgba(0,0,0,1)',
+          }
+        ]
+      }
+    })
   };
 
 

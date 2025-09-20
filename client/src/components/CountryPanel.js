@@ -111,55 +111,63 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
 
   const fetchCountryData = async (countryCode = initCountry || country.code, setCountryDataFunc = setCountryData) => {
     // chartRef.current.resetZoom();
-    try {
-      // Fix for Djibouti
-      if (countryCode === "-99") {
-        countryCode = "DJI";
-      }
-      // Fix for Antarctica
-      if (countryCode === "ATA" || countryCode === "ESH" || countryCode === "GUF") {
-        return
-      }
-      return axios.get(`/api/country/${countryCode}/data?compress=y`)
-        .then((response) => {
-          const data = response.data[countryCode].info;
-          console.log("info: ", data);
-          setCountryDataFunc(data);
-          const cData = response.data[countryCode].indicators
-          console.log("data", cData);
-          let labels = Object.keys(cData.GDP).map(Number);
-          const max_year = Math.max(...labels);
-          labels.push(max_year + 1);
-          console.log("labels", labels);
-
-          // Filter out datasets with all null values
-          const datasets = Object.keys(cData).filter((key) => {
-            return Object.values(cData[key]).some(value => value !== null);
-          }).map((key) => {
-            const dataset = {
-              label: key,
-              data: Object.entries(cData[key])
-                .filter(([k, val]) => Number(k) <= max_year)
-                .map(([k, val]) => ({ x: Number(k), y: val })),
-              borderColor: 'rgba(0,0,0,1)',
-              usePointStyle: true,
-              pointRadius: 0,
-              hidden: true,
-              hitRadius: 10,
-              scale: 'y',
-            };
-            return dataset;
-          });
-          console.log("datasets", datasets);
-          return {
-            labels: labels,
-            datasets: datasets
-          };
-        }
-        );
-    } catch (error) {
-      console.error("Error fetching data:", error);
+    // Fix for Djibouti
+    if (countryCode === "-99") {
+      countryCode = "DJI";
     }
+    // Fix for Antarctica
+    if (countryCode === "ATA" || countryCode === "ESH" || countryCode === "GUF") {
+      return
+    }
+    return axios.get(`/api/country/${countryCode}/data?compress=y`)
+      .then((response) => {
+        const data = response.data[countryCode].info;
+        console.log("info: ", data);
+        setCountryDataFunc(data);
+        const cData = response.data[countryCode].indicators
+        console.log("data", cData);
+        let labels = Object.keys(cData.GDP).map(Number);
+        const max_year = Math.max(...labels);
+        labels.push(max_year + 1);
+        console.log("labels", labels);
+
+        // Filter out datasets with all null values
+        const datasets = Object.keys(cData).filter((key) => {
+          return Object.values(cData[key]).some(value => value !== null);
+        }).map((key) => {
+          const dataset = {
+            label: key,
+            data: Object.entries(cData[key])
+              .filter(([k, val]) => Number(k) <= max_year)
+              .map(([k, val]) => ({ x: Number(k), y: val })),
+            borderColor: 'rgba(0,0,0,1)',
+            usePointStyle: true,
+            pointRadius: 0,
+            hidden: true,
+            hitRadius: 10,
+            scale: 'y',
+          };
+          return dataset;
+        });
+        console.log("datasets", datasets);
+        return {
+          labels: labels,
+          datasets: datasets
+        };
+      }
+      ).catch(function (error) {
+        console.error("Error fetching data:", error);
+        return {
+          labels: [0, 0, 0],
+          datasets: [
+            {
+              label: 'Error fetching data',
+              data: [0, 0, 0],
+              borderColor: 'rgba(0,0,0,1)',
+            }
+          ]
+        }
+      })
   };
 
   ///These are the options for the chart
@@ -305,16 +313,17 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
     <div
       style={{
         position: "fixed",
-        right: 0,
+        /*right: 0,
         top: 0,
         height: "100vh",
         width: isOpen ? "40%" : "0px",
-        overflow: "hidden",
+        overflow: "hidden",*/
         backgroundColor: "#B9D9EB",
         color: "black",
         transition: "width 0.3s ease",
         padding: isOpen ? "20px" : "0px",
-      }} >
+      }}
+      className={isOpen ? "sidebarExpanded" : "sidebarCollapsed"}>
 
       {isOpen && chartData && (
         <div>

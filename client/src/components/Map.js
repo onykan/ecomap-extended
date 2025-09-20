@@ -151,60 +151,62 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
       style={{
         position: "relative",
         overflow: "hidden",
-        width: isPanelOpen ? "58%" : "100%",
+        /*width: isPanelOpen ? "58%" : "100%",*/
         transition: "width 0.3s ease",
 
       }
       }
     >
-      <div style={{ position: "absolute" }}>
+      <div style={{ position: "fixed", top: "0px", left: "0px" }}>
         <MapLegend
           id="maplegend"
           stops={getGradientStops()}
           colors={getGradientColors()}
         />
       </div>
-      <ComposableMap data-tooltip-id="tip"
-        data-tooltip-html={tooltipContent}
-      >
-        <ZoomableGroup
-          center={[0, 0]}
-          minZoom={0.5}
-          maxZoom={5}
-          translateExtent={[
-            [-500, -300], // Top-left corner
-            [1300, 900],   // Bottom-right corner
-          ]}
+      <div id="mapcontainer">
+        <ComposableMap data-tooltip-id="tip"
+          data-tooltip-html={tooltipContent}
         >
-          <Sphere stroke="#EAEAEC" fill="#1a1a1a" />
-          <Graticule stroke="white" strokeWidth={0.3} />
-          <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
-                const countryCode = geo.id;
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    fill={getCountryColor(countryCode)}
-                    onMouseEnter={() => handleMouseEnter(countryCode)}
-                    onMouseLeave={() => {
-                      setTooltipContent("");
-                    }}
-                    onClick={() => handleCountryClick(countryCode)}
-                    style={{
-                      default: { outline: "none" },
-                      hover: { fill: "#2B6CB0", outline: "none", cursor: "pointer" },
-                      pressed: { outline: "none" },
-                    }}
-                  />
-                );
-              })
-            }
-          </Geographies>
-        </ZoomableGroup>
-      </ComposableMap>
-      <Tooltip id="tip" float={true} />
+          <ZoomableGroup
+            center={[0, 0]}
+            minZoom={0.5}
+            maxZoom={5}
+            translateExtent={[
+              [-500, -300], // Top-left corner
+              [1300, 900],   // Bottom-right corner
+            ]}
+          >
+            <Sphere stroke="#EAEAEC" fill="#1a1a1a" />
+            <Graticule stroke="white" strokeWidth={0.3} />
+            <Geographies geography={geoUrl}>
+              {({ geographies }) =>
+                geographies.map((geo) => {
+                  const countryCode = geo.id;
+                  return (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      fill={getCountryColor(countryCode)}
+                      onMouseEnter={() => handleMouseEnter(countryCode)}
+                      onMouseLeave={() => {
+                        setTooltipContent("");
+                      }}
+                      onClick={() => handleCountryClick(countryCode)}
+                      style={{
+                        default: { outline: "none" },
+                        hover: { fill: "#2B6CB0", outline: "none", cursor: "pointer" },
+                        pressed: { outline: "none" },
+                      }}
+                    />
+                  );
+                })
+              }
+            </Geographies>
+          </ZoomableGroup>
+        </ComposableMap>
+        <Tooltip id="tip" float={true} />
+      </div>
 
       <CountryPanel country={selectedCountry} isOpen={isPanelOpen} onClose={closePanel} indicatorCount={indicatorCount} />
     </div>

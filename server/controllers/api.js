@@ -405,13 +405,17 @@ async function fetchData(url, params = "") {
     return data;
   } catch (error) {
     console.error('Error:', error);
-    return JSON.parse({});
+    return {0: 1, 1: {message: "dummy"}};
   }
+  /*
+  return {0: 1, 1: {message: "dummy"}};
+  */
 }
 
 // Fetches all the pages if the data can't fit in one response
 async function fetchDataApi(url, params = "") {
   const res = await fetchData(url, new URLSearchParams({ format: "json", per_page: maxPerPage }).toString() + "&" + params);
+
   if (res.length == 1) return res[0];
   let data = res[1];
   let pages = res[0]['pages'];
@@ -432,7 +436,7 @@ function getIndicator(indId) {
 
 // Checks if the data is invalid
 function noData(data) {
-  return !data || data.hasOwnProperty('message')
+  return (!data) || data.hasOwnProperty('message')
 }
 
 // Sets response to be 404 with message if data is invalid.

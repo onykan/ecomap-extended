@@ -51,39 +51,47 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
     setIndicator(newIndicator);
   }
 
+  //TODO: Make a current year global
+  const options = []
+  for (let i = 1960; i <= 2025; i++) {
+    options.push(<option key={"yearOption"+i} value={i}>{i}</option>);
+  }
+
   return (
     <form onSubmit={handleSubmit}>
       <button type="button" onClick={() => setSingleSlider(!singleSlider)}>
         {singleSlider ? 'Year range' : 'One year'}
       </button>
       <label>
-        <input
-          className="slider"
-          type="range"
+        <span>Begin year:</span>
+        <br/>
+        <select
+          className="numberInput"
+          /*type="number"*/
           name="dateBeg"
           ref={dateBegRef}
           defaultValue={dateBeg}
-          min="1960"
-          max="2023"
-          onChange={singleSlider ? handleSingleSliderChange : () => setCurrentDateBeg(dateBegRef.current.value)}
-        />
-        <span>Begin year: {currentDateBeg}</span>
+          /*min="1960"
+          max="2023"*/
+          onChange={singleSlider ? handleSingleSliderChange : (e) => setCurrentDateBeg(parseInt(e.target.value))}
+        >{options}</select>
       </label>
       
       {!singleSlider && (
         <label>
-        <input
-          className="slider"
-          type="range"
-          name="dateEnd"
-          ref={dateEndRef}
-          defaultValue={dateEnd}
-          min="1960"
-          max="2023"
-          onChange={() => setCurrentDateEnd(dateEndRef.current.value)}
-        />
-        <span>End year: {currentDateEnd}</span>
-      </label>
+          <span>End year:</span>
+          <br/>
+          <select
+            className="numberInput"
+            /*type="number"*/
+            name="dateEnd"
+            ref={dateEndRef}
+            defaultValue={dateEnd}
+            /*min="1960"
+            max="2023"*/
+            onChange={(e) => setCurrentDateEnd(parseInt(e.target.value))}
+          >{options}</select>
+        </label>
       )}
       <div id="Indicator">
         Indicator:
