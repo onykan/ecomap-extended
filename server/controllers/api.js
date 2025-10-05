@@ -119,8 +119,9 @@ const datalayers = {
   }
 }
 
+// Another instance where current year global is needed. Or previous. I can't seem to get any data for current year
 function validateYear(year) {
-  return isNumeric(year) && year >= 1920 && year <= 2024;
+  return isNumeric(year) && year >= 1920 && year <= 2025;
 }
 
 function validateDateRange(indicator, { dateBeg, dateEnd }) {

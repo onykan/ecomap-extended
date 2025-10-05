@@ -67,7 +67,7 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
     },
     cpi: {
       stops: [-2, 0, 2, 4, 7],
-      colors: ["red", "white", "green", "white", "red"],
+      colors: ["blue", "cyan", "green", "white", "red"],
       clamp: true
     },
     gdpC: {
@@ -80,10 +80,9 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
       colors: ["green", "white", "red"],
       clamp: true
     },
-    //TODO fix color scale for cpiC
     cpiC: {
-      stops: [-1, 1],
-      colors: ["white", "white"],
+      stops: [100, 200, 1000],
+      colors: ["green", "white", "red"],
       clamp: true
     }
   }
@@ -94,7 +93,7 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
 
     if (!countryData) return "#888";
     const value = yearIsSame ? countryData[dateBeg] : countryData;
-    if (value === null) return "#EEE";
+    if (!value) return "#888";
     let colSc;
     if (yearIsSame) {
       // Different coloring logic when year is the same
@@ -134,10 +133,22 @@ const Map = ({ dateBeg, dateEnd, indicator, countryNames, gdpData, urData, cpiDa
     const countryData = data[countryCode];
     const countryName = countryNames[countryCode] || countryCode;
     // Ensure countryData is not undefined
-    const value = countryData ? (yearIsSame ? countryData[dateBeg] : countryData) : null;
-    // Ugly but works
-    setTooltipContent(`${countryName}
-                       <br /> ${yearIsSame ? indicator + " " + value : "Yearly change " + (value ? (value.toFixed(1) + "%") : "No data")}`);
+    let value = countryData ? (yearIsSame ? countryData[dateBeg] : countryData) : null;
+
+    if (yearIsSame) {
+      setTooltipContent(`${countryName}
+                       <br /> ${value?
+                                  indicator.toUpperCase() + " " + new Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short", maximumFractionDigits: 3 }).format(value)
+                                :
+                                  "No data available"}`);
+    }
+    else {
+      setTooltipContent(`${countryName}
+                       <br /> ${value?
+                                  "Average annual change: " + new Intl.NumberFormat("en-US", { maximumFractionDigits: 1, unit: "percent" }).format(value) + " %"
+                                :
+                                  "No data available"}`);
+    }
   }
 
   const closePanel = () => {

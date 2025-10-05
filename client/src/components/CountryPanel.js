@@ -21,6 +21,7 @@ ChartJS.register(
 
 const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
   const chartRef = useRef(null);
+  const toggledDataRef = useRef(null);
   const [initCountry, setInitCountry] = useState(null);
   const [countryData, setCountryData] = useState([]);
   const [countryCmpData, setCountryCmpData] = useState(null);
@@ -40,10 +41,21 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
   });
 
   const combineChartData = (dataA, dataB) => {
-    let updatedLabels = [...dataA.labels];
-    let updatedDatasets = [...dataA.datasets];
-    dataB.labels.forEach(e => { updatedLabels.push(e) });
-    dataB.datasets.forEach(e => { updatedDatasets.push(e) });
+    let updatedLabels = [...dataA.labels, ...dataB.labels];
+    //let updatedDatasets = [...dataA.datasets];
+    //dataB.labels.forEach(e => { updatedLabels.push(e) });
+    let updatedDatasets = [];
+    dataA.datasets.forEach(e => {
+      updatedDatasets.push(e);
+      if (toggledDataRef.current === e.label) e.hidden = false;
+    });
+    dataB.datasets.forEach(e => {
+      updatedDatasets.push(e);
+      if (toggledDataRef.current === e.label) {
+        e.hidden = false;
+        e.borderColor = 'rgba(255,0,0,1)';
+      }
+    });
     setChartData({ labels: Array.from(new Set(updatedLabels.map(Number))).sort((a, b) => a - b), datasets: updatedDatasets });
   }
 
@@ -66,12 +78,12 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
           setInitCountry(country.code);
         }
         else if (cmpMode && !countryCmpData) {
-          if (country.code == countryData['code']) return;
+          if (country.code === countryData['code']) return;
           let cData = await fetchCountryData(country.code, setCountryCmpData);
           appendToChart(cData);
         }
         else if (cmpMode) {
-          if (country.code == countryData['code']) return;
+          if (country.code === countryData['code']) return;
           let cData = await fetchCountryData(countryData['code'], setCountryData);
           let cDataCmp = await fetchCountryData(country.code, setCountryCmpData);
           await Promise.all([cData, cDataCmp]);
@@ -183,6 +195,9 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
           position: "right",
           /// toggles the visibility of the datasets
           onClick: (e, legendItem, legend, chart) => {
+            //console.log(legendItem);
+            toggledDataRef.current = legendItem.text;
+
             const datasets = legend.legendItems.map((dataset, index) => {
               return dataset.text;
             });
