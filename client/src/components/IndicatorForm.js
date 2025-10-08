@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import '../styles/IndicatorForm.css';
 
-const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, setIndicator }) => {
+const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, setIndicator, currentYear }) => {
   const dateBegRef = useRef(null);
   const dateEndRef = useRef(null);
   const indicatorRef = useRef(null);
@@ -51,9 +51,8 @@ const IndicatorForm = ({ dateBeg, dateEnd, indicator, setDateBeg, setDateEnd, se
     setIndicator(newIndicator);
   }
 
-  //TODO: Make a current year global
   const options = []
-  for (let i = 1960; i <= 2025; i++) {
+  for (let i = 1960; i <= currentYear; i++) {
     options.push(<option key={"yearOption"+i} value={i}>{i}</option>);
   }
 

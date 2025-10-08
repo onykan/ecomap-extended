@@ -33,6 +33,14 @@ app.get('/uptime', (req, res) => {
     })
 });
 
+app.get('/year', (req, res) => {
+    let date = new Date(Date.now());
+    let year = date.getFullYear();
+    res.json({
+        year: year
+    })
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, `../client/${PROD ? 'build' : 'public'}/index.html`));
 });

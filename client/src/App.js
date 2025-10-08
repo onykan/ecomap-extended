@@ -6,9 +6,20 @@ import Map from './components/Map';
 import IndicatorsInfo from './components/IndicatorsInfo';
 import './App.css';
 
+// Let's hope no one expects the app to function properly if kept open long time after a new year.......
+let currentYear = 2025;
+try {
+  currentYear = (await axios.get('/year')).data.year;
+}
+catch (err) {
+  console.error("Failed to get current year. Defaulting to 2025");
+}
+console.log(currentYear);
+
+
 const App = () => {
-  const [dateBeg, setDateBeg] = useState('2022');
-  const [dateEnd, setDateEnd] = useState('2023');
+  const [dateBeg, setDateBeg] = useState(currentYear - 2);
+  const [dateEnd, setDateEnd] = useState(currentYear - 1);
   const [indicator, setIndicator] = useState('gdp');
   const [indicators, setIndicators] = useState([]);
   const [indicatorsInfoOpen, setIndInfoVisible] = useState(false);
@@ -88,6 +99,7 @@ const App = () => {
               setDateBeg={setDateBeg}
               setDateEnd={setDateEnd}
               setIndicator={setIndicator}
+              currentYear={currentYear}
             />
           </div>
           <div id="indicatorsInfo">

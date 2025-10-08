@@ -22,6 +22,7 @@ ChartJS.register(
 const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
   const chartRef = useRef(null);
   const toggledDataRef = useRef(null);
+  const [isLoading, setLoading] = useState(false);
   const [initCountry, setInitCountry] = useState(null);
   const [countryData, setCountryData] = useState([]);
   const [countryCmpData, setCountryCmpData] = useState(null);
@@ -72,24 +73,31 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
     const fetchData = async () => {
       if (country && isOpen) {
         if (!initCountry) {
+          //console.log("not initcountry, " + country.code);
           setInitCountry(country.code);
         }
         else if (initCountry && !cmpMode) {
+          //console.log("initcountry and not cmpmode, " + country.code);
           setInitCountry(country.code);
         }
         else if (cmpMode && !countryCmpData) {
+          //console.log("cmpmode and not countrycmpdata");
           if (country.code === countryData['code']) return;
+          //console.log("country code not equals countrydata[code]");
           let cData = await fetchCountryData(country.code, setCountryCmpData);
           appendToChart(cData);
         }
         else if (cmpMode) {
+          //console.log("cmpmode and countrycmpdata");
           if (country.code === countryData['code']) return;
+          //console.log("country code not equals countrydata[code]");
           let cData = await fetchCountryData(countryData['code'], setCountryData);
           let cDataCmp = await fetchCountryData(country.code, setCountryCmpData);
           await Promise.all([cData, cDataCmp]);
           combineChartData(cData, cDataCmp);
         }
         else {
+          //console.log("something else?");
           let cData = await fetchCountryData(initCountry || country.code, setCountryData);
           setChartData(cData);
         }
@@ -121,7 +129,8 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
     }
   }, [cmpMode]);
 
-  const fetchCountryData = async (countryCode = initCountry || country.code, setCountryDataFunc = setCountryData) => {
+  const fetchCountryData = async (countryCode = /*initCountry ||*/ country.code, setCountryDataFunc = setCountryData) => {
+    //console.log(country.code);
     // chartRef.current.resetZoom();
     // Fix for Djibouti
     if (countryCode === "-99") {
@@ -131,6 +140,9 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
     if (countryCode === "ATA" || countryCode === "ESH" || countryCode === "GUF") {
       return
     }
+
+    setLoading(true);
+
     return axios.get(`/api/country/${countryCode}/data?compress=y`)
       .then((response) => {
         const data = response.data[countryCode].info;
@@ -162,6 +174,9 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
           return dataset;
         });
         console.log("datasets", datasets);
+
+        setLoading(false);
+
         return {
           labels: labels,
           datasets: datasets
@@ -169,6 +184,9 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
       }
       ).catch(function (error) {
         console.error("Error fetching data:", error);
+
+        setLoading(false);
+
         return {
           labels: [0, 0, 0],
           datasets: [
@@ -339,6 +357,12 @@ const CountryPanel = ({ country, isOpen, onClose, indicatorCount }) => {
         padding: isOpen ? "20px" : "0px",
       }}
       className={isOpen ? "sidebarExpanded" : "sidebarCollapsed"}>
+
+      {isLoading && (
+        <div style={{width: "100%", height: "100%"}}>
+          <h1>Loading data...</h1>
+        </div>
+      )}
 
       {isOpen && chartData && (
         <div>

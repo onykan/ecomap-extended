@@ -1,11 +1,18 @@
 const { json } = require("express");
 const { predict_data, linearRegressionPredict, linearRegressionPredictPast, get_regressor, r2_score, linearRegressionFit } = require("../utils/predict.js");
 const { isNumeric, compressToYearly } = require("../utils/utils.js");
+/*
+const { writeFileSync, existsSync } = require("fs");
+const { readFile } = require("fs/promises");
+const { sep, join } = require("path");
+*/
 
 const router = require('express').Router();
 
 const apiUrl = "https://api.worldbank.org/v2";
 const maxPerPage = 10000;
+
+//const cachePath = join(__dirname, `.${sep}data${sep}`);
 
 const Frequency = {
   Yearly: 'Y',
@@ -119,9 +126,17 @@ const datalayers = {
   }
 }
 
+// Returns the year the server is experiencing
+function getYear() {
+  //let date = new Date("2015-01-01"); //debug
+  let date = new Date(Date.now());
+  return date.getFullYear();
+}
+
 // Another instance where current year global is needed. Or previous. I can't seem to get any data for current year
 function validateYear(year) {
-  return isNumeric(year) && year >= 1920 && year <= 2025;
+  //console.log(getYear());
+  return isNumeric(year) && year >= 1920 && year <= getYear();
 }
 
 function validateDateRange(indicator, { dateBeg, dateEnd }) {
@@ -129,11 +144,11 @@ function validateDateRange(indicator, { dateBeg, dateEnd }) {
     case Frequency.Yearly:
       return validateYear(dateBeg) && validateYear(dateEnd);
     case Frequency.Quarterly: {
-      let reg = /\b(19|20)\d{2}Q|q[1-4]\b/;
+      let reg = /\b(19|20)\d{2}(Q|q)[1-4]\b/;
       return reg.test(dateBeg) && reg.test(dateEnd)
     }
     case Frequency.Monthly: {
-      let reg = /\b(19|20)\d{2}M|m[1-12]\b/;
+      let reg = /\b(19|20)\d{2}(M|m)[1-12]\b/;
       return reg.test(dateBeg) && reg.test(dateEnd)
     }
   }
@@ -184,7 +199,6 @@ router.get('/indicator/:id', async (req, res) => {
 })
 
 // Route for minimal responses needed to display data layers on the map
-// TODO: Precalculate and store commonly needed data
 router.get('/datalayer/:id', async (req, res) => {
   const dataLayer = datalayers[req.params.id];
   const indicator = getIndicator(dataLayer.indicator);
@@ -194,14 +208,12 @@ router.get('/datalayer/:id', async (req, res) => {
     return;
   }
 
-  // TODO: Check if precalculated
-
   let dateBeg = req.query.dateBeg || undefined;
   let dateEnd = req.query.dateEnd || undefined;
 
   if (dateBeg === undefined && dateEnd === undefined) {
     dateBeg = '';
-    dateEnd = '2024'; // TODO: Find a way to find the most recent year of existing data
+    dateEnd = `${getYear() - 1}`; // TODO: Find a way to find the most recent year of existing data
   } else if (dateBeg === undefined) {
     dateBeg = dateEnd;
   } else if (dateEnd === undefined) {
@@ -408,13 +420,29 @@ async function fetchData(url, params = "") {
     console.error('Error:', error);
     return {0: 1, 1: {message: "dummy"}};
   }
-  /*
-  return {0: 1, 1: {message: "dummy"}};
-  */
+  //return {0: 1, 1: {message: "dummy"}};
 }
 
 // Fetches all the pages if the data can't fit in one response
 async function fetchDataApi(url, params = "") {
+  /*
+  let testPath = cachePath + "test.json";
+  //console.log(test);
+  //console.log("Does test.json exist?: " + existsSync(test));
+  try {
+    let testJson = JSON.parse(await readFile(testPath));
+    console.log("test.json as an object:");
+    console.log(testJson);
+    //console.log("test.json last modified: " + );
+  }
+  catch (err) {
+    console.error("Error reading test.json");
+    console.error(err);
+  }
+  */
+  //console.log("url: " + url);
+  //console.log("params = " + params);
+
   const res = await fetchData(url, new URLSearchParams({ format: "json", per_page: maxPerPage }).toString() + "&" + params);
 
   if (res.length == 1) return res[0];
